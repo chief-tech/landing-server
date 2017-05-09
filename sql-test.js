@@ -1,6 +1,11 @@
 var mysql = require('mysql');
 var fs = require('fs');
 
+// Require `PhoneNumberFormat`.
+var PNF = require('google-libphonenumber').PhoneNumberFormat;
+var phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
+
+
 function sqlConnect(callback)
 {
   fs.readFile('sql.json', 'utf8', function (err, data) {
@@ -31,38 +36,95 @@ function sqlConnect(callback)
   });
 }
 
-function keyExists(key, connection, callback) {
-  // "SELECT PhoneNumber FROM table WHERE PhoneNumber = \'" + key + "\'"
-  connection.query('SELECT PhoneNumber FROM Drivers WHERE PhoneNumber = ?', ['206 915 2316'], function(err, rows, fields) {
-    if (err) {
-      console.error('unable to make query', err);
-    }
+// returns null if the phone number is invalid
+function condensePhoneNumber(phoneNumber)
+{
+  // parse the phone number as a US number
+  var parsedPhoneNumber = phoneUtil.parse(phoneNumber, 'US')
 
-    // if there is a key that corresponds to this phone #
-    if (rows.length >= 1)
-    {
-      callback(true);
-    }
-    callback(false);
-  });
-
+  if (phoneUtil.isValidNumber(parsedPhoneNumber)) // check to see if we can dial this number from the US
+  {
+    // convert it into a standard international number
+    return phoneUtil.format(parsedPhoneNumber, PNF.INTERNATIONAL);
+  }
+  else // otherwise the number is invalid
+  {
+    return null;
+  }
 }
 
-sqlConnect(function(connection, err) {
-  if (err) {
-    return;
+// checks is a phone number is valid
+function checkPhoneNumber(phoneNumber)
+{
+  // if the phone number is null
+  if (!condensePhoneNumber(phoneNumber))
+  {
+    return false;
   }
+  return true;
+}
 
-  keyExists('206 915 2306', connection);
+// calls back true if data was added, false if phone # was already present
+function addData(data, connection, callback) {
+  connection.query('INSERT INTO Drivers SET ?', data, function(error, results, fields) {
+    // if there was an error inserting, check to see if the phone number already exists
+    if (error)
+    {
+      // check to see if the error was caused by lack of
+      connection.query('SELECT PhoneNumber FROM Drivers WHERE PhoneNumber = ?', [data.PhoneNumber], function(error, results, fields) {
+        if (error)
+        {
+          callback(error);
+          return;
+        }
 
-  
+        if (results.length == 1) // if there was already an entry
+        {
+          callback(null, false); //notify the user that there was already an entry
+          return;
+        }
+        else { // there was some really serious problem
+          throw new Error("there was a really serious problem");
+          return;
+        }
+      });
 
-  connection.query('SELECT * FROM Drivers', function(err, rows, fields) {
-    if (!err)
-      console.log('The solution is: ', rows);
-    else
-      console.log('Error while performing Query.');
+    // if there was no error inserting
+    } else {
+      callback(null, true); //it all worked
+      return;
+    }
   });
+}
 
-  connection.end();
-});
+
+//etSupportedRegions();
+console.log(checkPhoneNumber('+49 206 915 2306'));
+console.log(checkPhoneNumber('+4 206 915 2306'));
+console.log(checkPhoneNumber('206 915 2306'));
+console.log(checkPhoneNumber('206-915-2306'));
+console.log(checkPhoneNumber('12069152306'));
+
+
+// sqlConnect(function(connection, err) {
+//   if (err) {
+//     return;
+//   }
+//
+//   data = { PhoneNumber: "206 915 2436", FirstName: 'Isaac', LastName: 'Zinda', Birthday: '1998-05-02' };
+//
+//   addData(data, connection, function(err, added) {
+//     console.log(err);
+//     console.log(added);
+//
+//     // if (err)
+//     // {
+//     //   console.error(err);
+//     //   return;
+//     // }
+//     // else
+//     // {
+//     //   console.log(added);
+//     // }
+//   });
+// });
