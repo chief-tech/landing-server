@@ -1,0 +1,69 @@
+body,
+html{
+  width: 100%;
+  height: 100%;
+  background: #3ca2e0;
+}
+.home{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.item{
+  height: 600px;
+  width: 600px;
+  background: #fff;
+  border-radius: 10%;
+}
+.content{
+  height: 100%;
+  padding: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.logo{
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin: 0 auto;
+  border: 3px solid #94979c;
+  color: #94979c;
+  margin-bottom: 50px;
+  padding: 15px;
+  line-height: 90px;
+}
+
+.NewUser h1{
+  font-weight: 100;
+  font-size: 30px;
+  margin-bottom: 50px;
+
+}
+
+.LogIn h1{
+  font-weight: 100;
+  font-size: 30px;
+  margin-bottom: 50px;
+
+}
+
+input[type=code],
+input[type=username],
+input[type=password]{
+  background: 0 0 0;
+  border: 0;
+  box-shadow: none;
+  border-bottom: 1px solid #afb5c1;
+}
+.lg{
+  margin-bottom: 10px;
+}
+.input-group-addon{
+  background: 0 0;
+  border: 0;
+  color: #afb5c1;
+}
