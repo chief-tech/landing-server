@@ -1,6 +1,6 @@
 var mysql = require('mysql');
 var fs = require('fs');
-
+var sqlCredentials = require('./passwords/sql.json');
 var events = require('events');
 
 var errorEvents = new events.EventEmitter();
@@ -37,18 +37,12 @@ successEvents.addListener('photo-changed', function() {
 
 function sqlConnect(callback)
 {
-  fs.readFile('sql.json', 'utf8', function (err, data) {
-    if (err) {
-      console.error('unable to open sql passwords file', err);
-      return;
-    }
-
     // setup connection specifics
     var sqlInfo = JSON.parse(data);
     var connection = mysql.createConnection({
-      host     : sqlInfo['host'],
-      user     : sqlInfo['user'],
-      password : sqlInfo['password'],
+      host     : sqlCredentials['host'],
+      user     : sqlCredentials['user'],
+      password : sqlCredentials['password'],
       database : 'landing'
     });
 
@@ -62,7 +56,6 @@ function sqlConnect(callback)
       // if everything has gone well, callback with the open connection
       callback(connection);
     });
-  });
 }
 
 // returns null if the phone number is invalid

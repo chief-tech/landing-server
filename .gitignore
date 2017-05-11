@@ -1,5 +1,5 @@
 .*
 key.pem
-aws.txt
 node_modules
-sql.json
+passwords
+accounts
