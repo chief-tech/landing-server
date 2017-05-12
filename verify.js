@@ -7,7 +7,7 @@ var nexmo = new Nexmo({
     apiSecret: nexmoCredentials.secret
   });
 
-
+  
 
 nexmo.message.sendSms('12014646820', '16179550175', 'Sidd is good.', function(error, results) {
   if (error)

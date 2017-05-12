@@ -1,5 +1,8 @@
-.*
+.gitignore
+.DS_Store
 key.pem
 node_modules
 passwords
 accounts
+.ftpconfig
+.ftpignore
