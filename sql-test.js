@@ -38,7 +38,6 @@ successEvents.addListener('photo-changed', function() {
 function sqlConnect(callback)
 {
     // setup connection specifics
-    var sqlInfo = JSON.parse(data);
     var connection = mysql.createConnection({
       host     : sqlCredentials['host'],
       user     : sqlCredentials['user'],
