@@ -2,13 +2,10 @@ var mysql = require('mysql');
 var fs = require('fs');
 var sqlCredentials = require('./passwords/sql.json');
 var events = require('events');
+var phone = require('./phone.js');
 
 var errorEvents = new events.EventEmitter();
 var successEvents = new events.EventEmitter();
-
-// Require `PhoneNumberFormat`.
-var PNF = require('google-libphonenumber').PhoneNumberFormat;
-var phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
 
 // setup all of the fun listners
 errorEvents.addListener('invalid-number', function() {
@@ -35,7 +32,11 @@ successEvents.addListener('photo-changed', function() {
   console.log("photo was changed successfully");
 });
 
-function sqlConnect(callback)
+// connect to the mysql server
+sqlConnect();
+
+// connect to the sql table
+function sqlConnect()
 {
     // setup connection specifics
     var connection = mysql.createConnection({
@@ -46,43 +47,7 @@ function sqlConnect(callback)
     });
 
     // connect to the server
-    connection.connect(function (err) {
-      if (err) {
-        console.error('unable to connect to mySql', err);
-        return;
-      }
-
-      // if everything has gone well, callback with the open connection
-      callback(connection);
-    });
-}
-
-// returns null if the phone number is invalid
-function formatPhoneNumber(phoneNumber)
-{
-  // parse the phone number as a US number
-  var parsedPhoneNumber = phoneUtil.parse(phoneNumber, 'US')
-
-  if (phoneUtil.isValidNumber(parsedPhoneNumber)) // check to see if we can dial this number from the US
-  {
-    // convert it into a standard international number
-    return phoneUtil.format(parsedPhoneNumber, PNF.INTERNATIONAL);
-  }
-  else // otherwise the number is invalid
-  {
-    return null;
-  }
-}
-
-// checks is a phone number is valid
-function validPhoneNumber(phoneNumber)
-{
-  // if the phone number is null
-  if (!formatPhoneNumber(phoneNumber))
-  {
-    return false;
-  }
-  return true;
+    connection.connect();
 }
 
 // checks an object to make sure that it is valid
@@ -113,14 +78,14 @@ function addUser(connection, data) {
   data["ProfilePicturePath"] = "default.png"; // set the default user photo
 
   // if the phone number passed is not valid
-  if (!validPhoneNumber(data.PhoneNumber))
+  if (!phone.validate(data.PhoneNumber))
   {
     errorEvents.emit('invalid-number');
     return;
   }
 
   // format the phone number to the international standard
-  data.PhoneNumber = formatPhoneNumber(data.PhoneNumber);
+  data.PhoneNumber = phone.format(data.PhoneNumber);
 
   connection.query('INSERT INTO Drivers SET ?', data, function(error, results, fields) {
     // if there was an error inserting, check to see if the phone number already exists
@@ -157,14 +122,14 @@ function addUser(connection, data) {
 function changePhoto(connection, phoneNumber, filepath)
 {
   // if the phone number passed is not valid
-  if (!validPhoneNumber(phoneNumber))
+  if (!phone.validate(phoneNumber))
   {
     errorEvents.emit('invalid-number');
     return;
   }
 
   // format the phone number to the international standard
-  phoneNumber = formatPhoneNumber(phoneNumber);
+  phoneNumber = phone.format(phoneNumber);
 
   connection.query('UPDATE Drivers SET ? WHERE PhoneNumber = ?', [{ProfilePicturePath: filepath}, phoneNumber], function(error, results, fields) {
     // if there was an error inserting, check to see if the phone number already exists
@@ -187,13 +152,14 @@ function changePhoto(connection, phoneNumber, filepath)
   });
 }
 
-sqlConnect(function(connection, err) {
-  if (err) {
-    return;
-  }
 
-  changePhoto(connection, "206 917 2306", "helloworld.txt");
-
-  // data = { PhoneNumber: "206 915 2366", FirstName: 'Isaac', LastName: 'Zinda', Birthday: '1998-05-02' };
-  // addUser(connection, data);
-});
+// sqlConnect(function(connection, err) {
+//   if (err) {
+//     return;
+//   }
+//
+//   changePhoto(connection, "206 917 2306", "helloworld.txt");
+//
+//   // data = { PhoneNumber: "206 915 2366", FirstName: 'Isaac', LastName: 'Zinda', Birthday: '1998-05-02' };
+//   // addUser(connection, data);
+// });
