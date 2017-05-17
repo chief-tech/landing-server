@@ -1,0 +1,44 @@
+body,
+html{
+  width: 100%;
+  height: 100%;
+  background: #3ca2e0;
+}
+.home{
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.item{
+  height: 600px;
+  width: 600px;
+  background: #fff;
+  border-radius: 10%;
+}
+.content{
+  height: 100%;
+  padding: 60px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  text-align: center;
+}
+
+.NewUser h1{
+  font-weight: 100;
+  font-size: 40px;
+  margin-top: 50px;
+  margin-bottom: 100px;
+
+}
+
+.lg{
+  margin-bottom: 20px;
+}
+.input-group-addon{
+  background: 0 0;
+  border: 0;
+  color: #afb5c1;
+}
