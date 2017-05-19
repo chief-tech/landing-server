@@ -23,40 +23,27 @@ var io = require('socket.io').listen(8080);
 
 var fs = require('fs');
 var sql = require('./sql.js');
+var verify = require('./verify.js');
 
 
-// processes error messages
-sql.events.addListener('warning', function(data) {
-  var socket = data.socket;
-  delete data.socket; //make sure socket it not sent
-  console.error(data);
-
-  if (data.data) {
-    socket.emit('warning', data);
-  } else {
-    socket.emit('warning', data.name);
-  }
+// add a socket.io emitter for each of the following events
+['warning', 'invalid-number', 'number-unavailable', 'user-added', 'photo-changed'].forEach(function(eventName){
+  // processes error messages
+  sql.events.addListener(eventName, function(data) {
+    console.log(eventName + " says " + data.data);
+    data.socket.emit(eventName, data.data);
+  });
 });
 
-// processes info messages
-sql.events.addListener('info', function(data) {
-  var socket = data.socket;
-  delete data.socket; //make sure that socket is not sent
-  console.log(data);
-
-  if (data.data) {
-    socket.emit('info', data);
-  } else {
-    socket.emit('info', data.name);
-  }
+sql.events.addListener('user-added', function(data) {
+  verify.sendMessage(data.data, "thanks for creating an account with Chief!");
+  
+  console.log("phone number is " + data.data);
 });
-
 
 // when we establish a new connection
 io.sockets.on('connection', function (socket)
 {
-  socket.emit('request-add-user'); // tests the add user functionality
-
   socket.on('add-user', function (data)
   {
     sql.addUser(socket, data);
