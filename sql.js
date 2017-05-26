@@ -3,6 +3,9 @@ var fs = require('fs');
 var sqlCredentials = require('./passwords/sql.json');
 var eventLibrary = require('events');
 var phone = require('./phone.js');
+var https = require('https');
+var facebook = require("./facebook.js");
+var verify = require("./verify.js")
 
 // setup event factory
 var events = new eventLibrary.EventEmitter();
@@ -18,10 +21,113 @@ var connection = mysql.createConnection({
 // connect to the server
 connection.connect();
 
+function randomInt(min, max) {
+  min = Math.ceil(min);
+  max = Math.floor(max);
+  return Math.floor(Math.random() * (max - min)) + min;
+}
 
-// creates an object from some data and a socket
-function toEventObject(socket, data) {
-  return {"socket": socket, "data": data};
+var getVerificationCode = function(socket, phoneNumber, callback) {
+  connection.query('SELECT VerificationCode FROM Drivers WHERE PhoneNumber = ?', [phoneNumber], function(error, results, fields) {
+    if (error) {
+      callback(error, null);
+      return;
+    }
+
+    if (results.length == 0) {
+      callback(new Error("no phone number found matching the one sent"));
+      return;
+    }
+
+    callback(null, results[0].VerificationCode);
+    return;
+  });
+}
+
+// we need to pass PhoneNumber and VerificationCode
+var verifyNumber = function(socket, data) {
+  connection.query('SELECT VerificationCode FROM Drivers WHERE UserId = ?', [data.UserId], function(error, results, fields) {
+    if (error) {
+      socket.emit('warning', error.message);
+      return;
+    }
+
+    if (results.length == 1) {
+      // the user was successfully verified
+      if (results[0].VerificationCode == data.VerificationCode)
+      {
+        console.log("looks like verification worked?");
+
+        connection.query('UPDATE Drivers SET Verified = ? WHERE UserId = ?', [true, data.UserId], function(error, results, fields) {
+          // if there was an error updating the table
+          if (error) {
+            socket.emit('warning', error.message);
+            return;
+          }
+
+          // the phone number was verified!
+          socket.emit('phone-verified');
+          return;
+        });
+      } // if there was an invalid verification code
+      else {
+        socket.emit('invalid-verification-code');
+        return;
+      }
+    // since there were no results, the phone number does not exist
+    } else {
+      socket.emit('invalid-number');
+      return;
+    }
+  });
+};
+
+var verifyUser = function(socket, data) {
+  connection.query('SELECT Verified FROM Drivers WHERE UserId = ?', [data.UserId], function(error, results, fields) {
+    if (results.length == 1) {
+      console.log(JSON.stringify(results));
+      // if the phone number has been verified
+      if (results[0].Verified == 1) {
+        socket.emit('user-registered'); // tell the client that the user is registered
+        return;
+      // otherwise, the user is not registered
+      } else {
+        socket.emit('number-not-verified');
+        return;
+      }
+    } else {
+      socket.emit('incomplete-registration');
+      return;
+    }
+  });
+}
+
+var sendVerificationCode = function(socket, data) {
+  connection.query('SELECT PhoneNumber FROM Drivers WHERE UserId = ?', [data.UserId], function(error, results, fields) {
+    if (error) {
+      socket.emit('warning', error.message);
+      return;
+    }
+
+    if (results.length == 1) {
+      var phoneNumber = results[0].PhoneNumber;
+
+      // assume that the number is valid
+      internationalPhoneNumber = phone.format(phoneNumber);
+      e164PhoneNumber = phone.formatE164(phoneNumber);
+
+      getVerificationCode(socket, internationalPhoneNumber, function(error, verificationCode) {
+        if (error) {
+          socket.emit('warning', error.message);
+          return;
+        }
+
+        verify.sendMessage(e164PhoneNumber, "Thanks for creating an account with Chief! Your verification code is: " + verificationCode);
+      });
+    } else {
+      socket.emit('warning', 'a user with the given ID was not found.');
+    }
+  });
 }
 
 // calls back true if data was added, false if phone # was already present
@@ -30,29 +136,34 @@ var addUser = function(socket, data) {
   ['PhoneNumber', 'LastName', 'FirstName', 'Birthday'].forEach(function(element){
     if (!(element in data))
     {
-      events.emit('warning', toEventObject(socket, 'not all of the correct user data was sent'));
+      socket.emit('warning', 'not all of the correct user data was sent');
       return;
     }
   });
 
-  // make sure that birthday is 8 numbers long
-  if (!data.Birthday.match('^[0-9]{8}$')) {
-    events.emit('warning', toEventObject(socket, 'birthday was incorrectly formatted'));
+  // the birthday can have hyphens in it, or no spaces
+  if (!data.Birthday.match('^[0-9]{4}-?[0-9]{2}-?[0-9]{2}$')) {
+    socket.emit('warning', 'birthday was incorrectly formatted');
     return;
   }
 
-
-  data["ProfilePicturePath"] = "default.png"; // set the default user photo
+  data.ProfilePicturePath = "default.png"; // set the default user photo
 
   // if the phone number passed is not valid
   if (!phone.validate(data.PhoneNumber))
   {
-    events.emit('invalid-number', toEventObject(socket, null));
+    socket.emit('invalid-number');
     return;
   }
 
   // format the phone number to the international standard
   data.PhoneNumber = phone.format(data.PhoneNumber);
+
+  // add a verification code to the phone number
+  data.VerificationCode = (randomInt(100000, 999999)).toString();
+
+  // note that the code has not been verified yet
+  data.Verified = false;
 
   connection.query('INSERT INTO Drivers SET ?', data, function(error, results, fields) {
     // if there was an error inserting, check to see if the phone number already exists
@@ -62,70 +173,35 @@ var addUser = function(socket, data) {
       connection.query('SELECT PhoneNumber FROM Drivers WHERE PhoneNumber = ?', [data.PhoneNumber], function(error, results, fields) {
         if (error)
         {
-          events.emit('warning', toEventObject(socket, error.message));
+          socket.emit('warning', error.message);
           return;
         }
 
         if (results.length == 1) // if there was already an entry
         {
-          events.emit('number-unavailable', toEventObject(socket, null)); //notify the user that there was already an entry
+          socket.emit('number-unavailable'); //notify the user that there was already an entry
           return;
         }
         else { // there was some really serious problem
-          events.emit('warning', toEventObject(socket, 'server-side problem with add user query'));
+          socket.emit('warning', 'server-side problem with add user query');
           return;
         }
       });
 
     // if there was no error inserting
     } else {
-      events.emit('user-added', toEventObject(socket, phone.formatE164(data.PhoneNumber))); //it all worked
+      socket.emit('user-added'); //it all worked
+      sendVerificationCode(socket, data);
+
       return;
     }
   });
 }
 
-// returns true if photo number exists
-var changePhoto = function(socket, data)
-{
-  // make sure the correct values are in the data
-  if (!("ProfilePicturePath" in data && "PhoneNumber" in data))
-  {
-    events.emit('warning', toEventObject(socket, 'not all of the correct data was sent to change the photo'));
-  }
-
-  // if the phone number passed is not valid
-  if (!phone.validate(data.PhoneNumber))
-  {
-    events.emit('invalid-number', toEventObject(socket, null));
-    return;
-  }
-
-  // format the phone number to the international standard
-  phoneNumber = phone.format(data.PhoneNumber);
-  filepath = data.ProfilePicturePath;
-
-  connection.query('UPDATE Drivers SET ? WHERE PhoneNumber = ?', [{ProfilePicturePath: filepath}, phoneNumber], function(error, results, fields) {
-    // if there was an error inserting, check to see if the phone number already exists
-    if (error)
-    {
-      events.emit('warning', toEventObject(socket, 'was unable to connect to the mysql database'));
-      return;
-    }
-
-    if (results.affectedRows == 0) // if no rows were effected, the phone number does not exist
-    {
-      events.emit('invalid-number', toEventObject(socket, null));
-      return;
-    }
-    else // if some rows were effected, the phone number does exist
-    {
-      events.emit('photo-changed', toEventObject(socket, null));
-      return;
-    }
-  });
-}
-
-module.exports.changePhoto = changePhoto;
+// module.exports.changePhoto = changePhoto;
 module.exports.addUser = addUser;
 module.exports.events = events;
+module.exports.verifyNumber = verifyNumber;
+module.exports.getVerificationCode = getVerificationCode;
+module.exports.verifyUser = verifyUser;
+module.exports.sendVerificationCode = sendVerificationCode;

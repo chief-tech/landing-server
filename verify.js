@@ -13,7 +13,6 @@ var nexmo = new Nexmo({
 
 function sendMessage(phoneNumber, message) {
   // convert phone number from international standard to
-
   nexmo.message.sendSms('12014646820', phoneNumber, message, function(error, results) {
     if (error) {
       events.emit('warning', error.message);
@@ -43,3 +42,4 @@ events.addListener('message-sent', function(){
 
 
 module.exports.sendMessage = sendMessage;
+module.exports.events = events;

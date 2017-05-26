@@ -6,7 +6,11 @@ var phoneUtil = require('google-libphonenumber').PhoneNumberUtil.getInstance();
 var format = function(phoneNumber)
 {
   // parse the phone number as a US number
-  var parsedPhoneNumber = phoneUtil.parse(phoneNumber, 'US')
+  try {
+    var parsedPhoneNumber = phoneUtil.parse(phoneNumber, 'US')
+  } catch(err) { //if there is an error parsing, the number is not valid
+    return null;
+  }
 
   if (phoneUtil.isValidNumber(parsedPhoneNumber)) // check to see if we can dial this number from the US
   {

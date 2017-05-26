@@ -1,56 +1,72 @@
-// for HTTP
-var io = require('socket.io').listen(8080);
-
-// for SSL
-// var fs = require('fs');
-// var https = require('https');
-// var express = require('express');
-// var app = express();
-// var options = {
-//   key: fs.readFileSync('./passwords/ssl/domain.pem'),
-//   cert: fs.readFileSync('./passwords/ssl/domain.crt')
-// };
-// // var serverPort = 443;
-// var server = https.createServer(options, app);
-// var io = require('socket.io')(server);
-//
-// server.listen(443);
-//
-// app.get('/', function (req, res) {
-//   res.send('hello world');
-// });
-// end
-
 var fs = require('fs');
+var facebook = require('./facebook');
+
+var options = {
+  key: fs.readFileSync('./passwords/ssl.key'),
+  cert: fs.readFileSync('./passwords/ssl.crt'),
+  ca: fs.readFileSync('./passwords/ssl-chain.crt')
+};
+
+var app = require('https').createServer(options, handler)
+  , io = require('socket.io').listen(app);
+
+app.listen(4433);
+
+//for testing
+function handler (req, res) {
+    res.writeHead(200);
+    res.end("welcome to ebidnsave\n");
+}
+
+// var fs = require('fs');
 var sql = require('./sql.js');
 var verify = require('./verify.js');
+var phone = require('./phone.js');
 
 
-// add a socket.io emitter for each of the following events
-['warning', 'invalid-number', 'number-unavailable', 'user-added', 'photo-changed'].forEach(function(eventName){
-  // processes error messages
-  sql.events.addListener(eventName, function(data) {
-    console.log(eventName + " says " + data.data);
-    data.socket.emit(eventName, data.data);
+function processRequest(socket, data, callback) {
+  // make sure that a token was sent with the data
+  if (!("Token" in data)) {
+    socket.emit('warning', 'token object not sent to server for user verification');
+    console.log("request " + data + " failed because there was no token");
+    return;
+  }
+
+  facebook.tokenToUserId(data.Token, function(error, userId) {
+    if (error) {
+      socket.emit('not-registered');
+      console.log(error.message);
+      return;
+    }
+
+    // change the token into the userId
+    delete data.Token;
+    data.UserId = userId;
+
+    callback(socket, data);
   });
-});
-
-sql.events.addListener('user-added', function(data) {
-  verify.sendMessage(data.data, "thanks for creating an account with Chief!");
-  
-  console.log("phone number is " + data.data);
-});
+}
 
 // when we establish a new connection
 io.sockets.on('connection', function (socket)
 {
   socket.on('add-user', function (data)
   {
-    sql.addUser(socket, data);
+    processRequest(socket, data, sql.addUser);
   });
 
-  socket.on('change-photo', function(data)
+  socket.on('verify-number', function(data)
   {
-    sql.changePhoto(socket, data);
+    processRequest(socket, data, sql.verifyNumber);
+  });
+
+  socket.on('verify-user', function(data)
+  {
+    processRequest(socket, data, sql.verifyUser);
+  });
+
+  socket.on('send-verification-code', function(data)
+  {
+    processRequest(socket, data, sql.sendVerificationCode);
   });
 });

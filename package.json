@@ -6,6 +6,8 @@
     "mysql": "^2.5.4",
     "google-libphonenumber": "^2.0.15",
     "nexmo": "^2.0.2",
-    "socket.io": "^2.0.1"
+    "socket.io": "^2.0.1",
+    "oauth": "^0.9.15",
+    "request": "^2.81.0"
   }
 }
