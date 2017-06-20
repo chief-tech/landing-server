@@ -1,10 +1,10 @@
 var fs = require('fs');
-var facebook = require('./facebook');
+var facebook = require('/var/node/facebook');
 
 var options = {
-  key: fs.readFileSync('./passwords/ssl.key'),
-  cert: fs.readFileSync('./passwords/ssl.crt'),
-  ca: fs.readFileSync('./passwords/ssl-chain.crt')
+  key: fs.readFileSync('/var/node/passwords/ssl.key'),
+  cert: fs.readFileSync('/var/node/passwords/ssl.crt'),
+  ca: fs.readFileSync('/var/node/passwords/ssl-chain.crt')
 };
 
 var app = require('https').createServer(options, handler)
@@ -19,9 +19,9 @@ function handler (req, res) {
 }
 
 // var fs = require('fs');
-var sql = require('./sql.js');
-var verify = require('./verify.js');
-var phone = require('./phone.js');
+var sql = require('/var/node/sql.js');
+var verify = require('/var/node/verify.js');
+var phone = require('/var/node/phone.js');
 
 
 function processRequest(socket, data, callback) {
@@ -32,6 +32,11 @@ function processRequest(socket, data, callback) {
     return;
   }
 
+  if (!("Database" in data)) {
+    socket.emit('warning', 'no destination database was specified');
+    return;
+  }
+
   facebook.tokenToUserId(data.Token, function(error, userId) {
     if (error) {
       socket.emit('not-registered');
@@ -39,17 +44,22 @@ function processRequest(socket, data, callback) {
       return;
     }
 
+    database = data.Database;
+    delete data.Database;
+
     // change the token into the userId
     delete data.Token;
     data.UserId = userId;
 
-    callback(socket, data);
+    callback(socket, database, data);
   });
 }
 
 // when we establish a new connection
 io.sockets.on('connection', function (socket)
 {
+  console.log("connected")
+
   socket.on('add-user', function (data)
   {
     processRequest(socket, data, sql.addUser);

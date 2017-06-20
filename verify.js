@@ -1,6 +1,6 @@
 var Nexmo = require('nexmo');
 var eventLibrary = require('events');
-var nexmoCredentials = require('./passwords/nexmo.json');
+var nexmoCredentials = require('/var/node/passwords/nexmo.json');
 
 // setup event factory
 var events = new eventLibrary.EventEmitter();

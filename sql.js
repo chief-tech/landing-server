@@ -1,11 +1,11 @@
 var mysql = require('mysql');
 var fs = require('fs');
-var sqlCredentials = require('./passwords/sql.json');
+var sqlCredentials = require('/var/node/passwords/sql.json');
 var eventLibrary = require('events');
-var phone = require('./phone.js');
+var phone = require('/var/node/phone.js');
 var https = require('https');
-var facebook = require("./facebook.js");
-var verify = require("./verify.js")
+var facebook = require("/var/node/facebook.js");
+var verify = require("/var/node/verify.js")
 
 // setup event factory
 var events = new eventLibrary.EventEmitter();
@@ -27,8 +27,8 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
-var getVerificationCode = function(socket, phoneNumber, callback) {
-  connection.query('SELECT VerificationCode FROM Drivers WHERE PhoneNumber = ?', [phoneNumber], function(error, results, fields) {
+var getVerificationCode = function(socket, database, phoneNumber, callback) {
+  connection.query('SELECT VerificationCode FROM ' + database + ' WHERE PhoneNumber = ?', [phoneNumber], function(error, results, fields) {
     if (error) {
       callback(error, null);
       return;
@@ -45,8 +45,8 @@ var getVerificationCode = function(socket, phoneNumber, callback) {
 }
 
 // we need to pass PhoneNumber and VerificationCode
-var verifyNumber = function(socket, data) {
-  connection.query('SELECT VerificationCode FROM Drivers WHERE UserId = ?', [data.UserId], function(error, results, fields) {
+var verifyNumber = function(socket, database, data) {
+  connection.query('SELECT VerificationCode FROM ' + database + ' WHERE UserId = ?', [data.UserId], function(error, results, fields) {
     if (error) {
       socket.emit('warning', error.message);
       return;
@@ -58,7 +58,7 @@ var verifyNumber = function(socket, data) {
       {
         console.log("looks like verification worked?");
 
-        connection.query('UPDATE Drivers SET Verified = ? WHERE UserId = ?', [true, data.UserId], function(error, results, fields) {
+        connection.query('UPDATE ' + database + ' SET Verified = ? WHERE UserId = ?', [true, data.UserId], function(error, results, fields) {
           // if there was an error updating the table
           if (error) {
             socket.emit('warning', error.message);
@@ -82,8 +82,8 @@ var verifyNumber = function(socket, data) {
   });
 };
 
-var verifyUser = function(socket, data) {
-  connection.query('SELECT Verified FROM Drivers WHERE UserId = ?', [data.UserId], function(error, results, fields) {
+var verifyUser = function(socket, database, data) {
+  connection.query('SELECT Verified FROM ' + database + ' WHERE UserId = ?', [data.UserId], function(error, results, fields) {
     if (results.length == 1) {
       console.log(JSON.stringify(results));
       // if the phone number has been verified
@@ -102,8 +102,8 @@ var verifyUser = function(socket, data) {
   });
 }
 
-var sendVerificationCode = function(socket, data) {
-  connection.query('SELECT PhoneNumber FROM Drivers WHERE UserId = ?', [data.UserId], function(error, results, fields) {
+var sendVerificationCode = function(socket, database, data) {
+  connection.query('SELECT PhoneNumber FROM ' + database + ' WHERE UserId = ?', [data.UserId], function(error, results, fields) {
     if (error) {
       socket.emit('warning', error.message);
       return;
@@ -116,13 +116,13 @@ var sendVerificationCode = function(socket, data) {
       internationalPhoneNumber = phone.format(phoneNumber);
       e164PhoneNumber = phone.formatE164(phoneNumber);
 
-      getVerificationCode(socket, internationalPhoneNumber, function(error, verificationCode) {
+      getVerificationCode(socket, database, internationalPhoneNumber, function(error, verificationCode) {
         if (error) {
           socket.emit('warning', error.message);
           return;
         }
 
-        verify.sendMessage(e164PhoneNumber, "Thanks for creating an account with Chief! Your verification code is: " + verificationCode);
+        verify.sendMessage(e164PhoneNumber, "Thanks for creating a " + database + " account with Chief! Your verification code is: " + verificationCode);
       });
     } else {
       socket.emit('warning', 'a user with the given ID was not found.');
@@ -131,7 +131,7 @@ var sendVerificationCode = function(socket, data) {
 }
 
 // calls back true if data was added, false if phone # was already present
-var addUser = function(socket, data) {
+var addUser = function(socket, database, data) {
   // make sure that the data contains the right keys
   ['PhoneNumber', 'LastName', 'FirstName', 'Birthday'].forEach(function(element){
     if (!(element in data))
@@ -142,10 +142,13 @@ var addUser = function(socket, data) {
   });
 
   // the birthday can have hyphens in it, or no spaces
-  if (!data.Birthday.match('^[0-9]{4}-?[0-9]{2}-?[0-9]{2}$')) {
+  if (!data.Birthday.match('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')) {
     socket.emit('warning', 'birthday was incorrectly formatted');
     return;
   }
+
+  // modify birthday to fit SQL format
+  data.Birthday += " 00:00:00";
 
   data.ProfilePicturePath = "default.png"; // set the default user photo
 
@@ -165,12 +168,12 @@ var addUser = function(socket, data) {
   // note that the code has not been verified yet
   data.Verified = false;
 
-  connection.query('INSERT INTO Drivers SET ?', data, function(error, results, fields) {
+  connection.query('INSERT INTO ' + database + ' SET ?', data, function(error, results, fields) {
     // if there was an error inserting, check to see if the phone number already exists
     if (error)
     {
       // check to see if the error was caused by lack of
-      connection.query('SELECT PhoneNumber FROM Drivers WHERE PhoneNumber = ?', [data.PhoneNumber], function(error, results, fields) {
+      connection.query('SELECT PhoneNumber FROM ' + database + ' WHERE PhoneNumber = ?', [data.PhoneNumber], function(error, results, fields) {
         if (error)
         {
           socket.emit('warning', error.message);
@@ -191,7 +194,7 @@ var addUser = function(socket, data) {
     // if there was no error inserting
     } else {
       socket.emit('user-added'); //it all worked
-      sendVerificationCode(socket, data);
+      sendVerificationCode(socket, database, data);
 
       return;
     }

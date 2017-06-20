@@ -7,7 +7,7 @@ var tokenToUserId = function(token, callback) {
       callback(error, null);
       return;
     }
-    
+
     console.log(body);
 
     responseObject = JSON.parse(body);
