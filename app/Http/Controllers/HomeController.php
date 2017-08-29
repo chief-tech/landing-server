@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-
+use App\User;
+use App\ProviderDevice;
+use Exception;
 class HomeController extends Controller
 {
     protected $UserAPI;
@@ -95,6 +97,7 @@ class HomeController extends Controller
     public function trips()
     {
         $trips = $this->UserAPI->trips();
+        //var_dump($trips);die();
         return view('user.ride.trips',compact('trips'));
     }
 
@@ -141,5 +144,6 @@ class HomeController extends Controller
     {
         return $this->UserAPI->add_promocode($request);
     }
+
 
 }

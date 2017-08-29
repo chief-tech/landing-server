@@ -39,7 +39,7 @@ class UserRequests extends Model
     {
         return $this->belongsTo('App\ServiceType');
     }
-    
+
     /**
      * UserRequestPayment Model Linked
      */

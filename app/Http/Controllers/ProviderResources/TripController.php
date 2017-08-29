@@ -42,6 +42,8 @@ class TripController extends Controller
             }
 
             $Timeout = Setting::get('provider_select_timeout', 180);
+            // var_dump($IncomingRequest);
+            // die();
                 if(!empty($IncomingRequests)){
                     for ($i=0; $i < sizeof($IncomingRequests); $i++) {
                         $IncomingRequests[$i]->time_left_to_respond = $Timeout - (time() - strtotime($IncomingRequests[$i]->request->assigned_at));
@@ -91,7 +93,7 @@ class TripController extends Controller
                 'rating' => 'required|integer|in:1,2,3,4,5',
                 'comment' => 'max:255',
             ]);
-    
+
         try {
 
             $UserRequest = UserRequests::where('id', $id)
@@ -118,7 +120,7 @@ class TripController extends Controller
             // Delete from filter so that it doesn't show up in status checks.
             RequestFilter::where('request_id', $id)->delete();
 
-            // Send Push Notification to Provider 
+            // Send Push Notification to Provider
             $average = UserRequestRating::where('provider_id', $UserRequest->provider_id)->avg('provider_rating');
 
             $UserRequest->user->update(['rating' => $average]);
@@ -230,7 +232,7 @@ class TripController extends Controller
             }
 
             // Send Push Notification to User
-       
+
             return $UserRequest;
 
         } catch (ModelNotFoundException $e) {
@@ -288,7 +290,7 @@ class TripController extends Controller
 
             // incoming request push to provider
             (new SendPushNotification)->IncomingRequest($UserRequest->current_provider_id);
-            
+
         } catch (ModelNotFoundException $e) {
             UserRequests::where('id', $UserRequest->id)->update(['status' => 'CANCELLED']);
 
@@ -301,7 +303,7 @@ class TripController extends Controller
     {
         try {
             $UserRequest = UserRequests::findOrFail($request_id);
-            
+
             $Fixed = $UserRequest->service_type->fixed ? : 0;
             $Distance = ceil($UserRequest->distance) * $UserRequest->service_type->price;
             $Discount = 0; // Promo Code discounts should be added here.
@@ -350,7 +352,7 @@ class TripController extends Controller
                         User::where('id',$UserRequest->user_id)->update(['wallet_balance' => 0 ]);
                         $Payment->total = abs($Payable);
 
-                        // charged wallet money push 
+                        // charged wallet money push
                         (new SendPushNotification)->ChargedWalletMoney($UserRequest->user_id,currency($Wallet));
 
                     }else{
@@ -360,7 +362,7 @@ class TripController extends Controller
                         User::where('id',$UserRequest->user_id)->update(['wallet_balance' => $WalletBalance]);
                         $Payment->wallet = $Total;
 
-                        // charged wallet money push 
+                        // charged wallet money push
                         (new SendPushNotification)->ChargedWalletMoney($UserRequest->user_id,currency($Total));
                     }
 
@@ -392,7 +394,7 @@ class TripController extends Controller
             ]);
 
         if($request->ajax()) {
-            
+
             $Jobs = UserRequests::where('id',$request->request_id)
                                 ->where('provider_id', Auth::user()->id)
                                 ->with('payment','service_type','user','rating')

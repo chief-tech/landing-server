@@ -8,6 +8,8 @@ use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Http\Request;
+use Mail;
 class RegisterController extends Controller
 {
     /*
@@ -28,7 +30,7 @@ class RegisterController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = '/provider/';
+  //  protected $redirectTo = '/provider/';
 
     /**
      * Create a new controller instance.
@@ -64,12 +66,13 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        return Provider::create([
+         return Provider::create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
             'email' => $data['email'],
             'password' => bcrypt($data['password']),
         ]);
+      //  die("In create function");
     }
 
     /**
@@ -90,5 +93,43 @@ class RegisterController extends Controller
     protected function guard()
     {
         return Auth::guard('provider');
+    }
+
+    protected function register(Request $request){
+      $input = $request->all();
+      $validator = $this->validator($input);
+      $validator->validate();
+  //    var_dump($validator->passes());
+      //die();
+      if($validator->passes()){
+        $data = $this->create($input)->toArray();
+        $data['token'] = str_random(25);
+        $provider = Provider::find($data['id']);
+        $provider->token = $data['token'];
+        $provider->save();
+
+        Mail::send('provider.mails.confirmation', $data, function($message) use($data){
+              $message->to($data['email']);
+              $message->subject('VERIFY EMAIL ADDRESS');
+        });
+        return redirect(url('provider/login'))->with('status','A confirmation email has been send to your email address. Kindly check your email to verify.');
+
+      }
+      echo $validator->errors();
+    //  die();
+    //  return redirect(url('provider/login'))->with('status', $validator->errors());
+    }
+
+    public function confirmation($token){
+      $provider = Provider::where('token', $token)->first();
+      if(!is_null($provider)){
+        $provider->confirmation =1;
+        $provider->token = '';
+        $provider->save();
+        return redirect(url('provider/login'))->with('status','Congratulations, Your email is verified.');
+
+      }
+      return redirect(url('provider/login'))->with('status','Something went wrong.');
+
     }
 }

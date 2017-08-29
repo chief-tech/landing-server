@@ -31,6 +31,7 @@ class LoginController extends Controller
      */
     public $redirectTo = '/provider/';
 
+
     /**
      * Create a new controller instance.
      *

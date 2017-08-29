@@ -18,6 +18,9 @@ Route::group(['prefix' => 'provider'], function () {
     Route::get('/login', 'ProviderAuth\LoginController@showLoginForm');
     Route::post('/login', 'ProviderAuth\LoginController@login');
     Route::post('/logout', 'ProviderAuth\LoginController@logout');
+    Route::get('/Verify', function () {
+        return view('provider.auth.emailVerification');
+    });
 
     Route::get('/register', 'ProviderAuth\RegisterController@showRegistrationForm');
     Route::post('/register', 'ProviderAuth\RegisterController@register');
@@ -26,6 +29,8 @@ Route::group(['prefix' => 'provider'], function () {
     Route::post('/password/reset', 'ProviderAuth\ResetPasswordController@reset');
     Route::get('/password/reset', 'ProviderAuth\ForgotPasswordController@showLinkRequestForm');
     Route::get('/password/reset/{token}', 'ProviderAuth\ResetPasswordController@showResetForm');
+    Route::get('/confirmation/{token}', 'ProviderAuth\RegisterController@confirmation')->name('confirmation');
+
 });
 
 Route::group(['prefix' => 'admin'], function () {
@@ -112,9 +117,11 @@ Route::resource('card', 'Resource\CardResource');
 Route::get('/promotion', 'HomeController@promotion');
 Route::post('/add/promocode', 'HomeController@add_promocode');
 
+Route::get('/notifyUser', 'fcmController@notify');
+Route::post('/send/request','UserApiController@send_request');
 Route::get('/send/push',
     function(){
-//         $data = PushNotification::app('IOSUser')
+//         $data = PushNotification::app('AndroidUser')
 //         ->to('44405aa1630c9f5d8f0e469b7c8b61c2f18c726d86bae7998d60e37c684e4b9b')
 //         ->send('Hello World, i`m a push message');
 // dd($data);

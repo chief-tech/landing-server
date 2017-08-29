@@ -30,6 +30,7 @@ class RideController extends Controller
     public function confirm_ride(Request $request)
     {
         $fare = $this->UserAPI->estimated_fare($request)->getData();
+        
         $service = (new Resource\ServiceResource)->show($request->service_type);
         $cards = (new Resource\CardResource)->index();
 

@@ -15,13 +15,13 @@ return array(
         'service'     =>'apns'
     ),
     'AndroidUser' => array(
-        'environment' =>'development',
-        'apiKey'      => env('ANDROID_PROVIDER_PUSH_KEY','yourAPIKey'),
+        'environment' =>'production',
+        'apiKey'      => env('ANDROID_USER_PUSH_KEY','yourAPIKey'),
         'service'     =>'gcm'
     ),
     'AndroidProvider' => array(
-        'environment' =>'development',
-        'apiKey'      => env('ANDROID_USER_PUSH_KEY','yourAPIKey'),
+        'environment' =>'production',
+        'apiKey'      => env('ANDROID_PROVIDER_PUSH_KEY','yourAPIKey'),
         'service'     =>'gcm'
     )
 

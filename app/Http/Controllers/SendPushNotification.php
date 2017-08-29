@@ -39,7 +39,7 @@ class SendPushNotification extends Controller
         return $this->sendPushToProvider($provider, trans('api.push.incoming_request'));
 
     }
-    
+
 
     /**
      * Driver Documents verfied.
@@ -77,34 +77,77 @@ class SendPushNotification extends Controller
      *
      * @return void
      */
-    public function sendPushToUser($user_id, $push_message){
+     public function sendPushToUser($user_id, $push_message){
 
-    	try{
+       try{
 
-	    	$user = User::findOrFail($user_id);
+   	    	$user = User::findOrFail($user_id);
 
-            if($user->device_token != ""){
+          if($user->device_token != ""){
+            $url = "https://fcm.googleapis.com/fcm/send";
+            $token = $user->device_token;
+            //token is device_id of user to whom we want to send notification.
+            $fields = array(
+                 'to' => $token,
+                 'data' => $push_message
+               );
+            //FCM SERVER KEY FOR USER APP IN AUTHORIZATION:KEY
+            $headers = array(
+                  'Authorization:key = AAAABJCAoaQ:APA91bF1cbLoMIzQPSKk14xvyiap8XOvoy-r1WTqTw-0TLt-314PRUIP_BQRJiOYUPewOxAyYT0aBQWNwZILSriBy6ucc17eULee-xdfL8TnhLTgawdKug9ZnrQE8HyB33-0eAtPIl2T',
+                  'Content-Type: application/json'
+                );
+           $ch = curl_init();
+           curl_setopt($ch, CURLOPT_URL, $url);
+           curl_setopt($ch, CURLOPT_POST, true);
+           curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
+           curl_setopt($ch, CURLOPT_RETURNTRANSFER,true);
+           curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,0);
+           curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
+           curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
 
-    	    	if($user->device_type == 'ios'){
+           $result = curl_exec($ch);
+           if($result === FALSE){
+            // die('Curl Failed' . curl_error($ch));
+             return response()->json(['error' => 'Curl Failed' . curl_error($ch)], 500);
 
-    	    		return \PushNotification::app('IOSUser')
-    		            ->to($user->device_token)
-    		            ->send($push_message);
+         }
+         curl_error($ch);
+         return $result;
+       }
+     }
 
-    	    	}elseif($user->device_type == 'android'){
-    	    		
-    	    		return \PushNotification::app('AndroidUser')
-    		            ->to($user->device_token)
-    		            ->send($push_message);
-
-    	    	}
-            }
-
-    	} catch(Exception $e){
-    		return $e;
-    	}
-
-    }
+       catch(Exception $e){
+       		return $e;
+       	}
+     }
+    // public function sendPushToUser($user_id, $push_message){
+    //
+    // 	try{
+    //
+	  //   	$user = User::findOrFail($user_id);
+    //
+    //         if($user->device_token != ""){
+    //
+    // 	    	if($user->device_type == 'ios'){
+    //
+    // 	    		return \PushNotification::app('IOSUser')
+    // 		            ->to($user->device_token)
+    // 		            ->send($push_message);
+    //
+    // 	    	}elseif($user->device_type == 'android'){
+    //
+    // 	    		return \PushNotification::app('AndroidUser')
+    // 		            ->to($user->device_token)
+    // 		            ->send($push_message);
+    //
+    // 	    	}
+    //         }
+    //
+    // 	} catch(Exception $e){
+    // 		return $e;
+    // 	}
+    //
+    // }
 
     /**
      * Sending Push to a user Device.
@@ -118,20 +161,46 @@ class SendPushNotification extends Controller
 	    	$provider = ProviderDevice::where('provider_id',$provider_id)->first();
 
             if($provider->token != ""){
+              $url = "https://fcm.googleapis.com/fcm/send";
+              $token = $provider->device_token;
+              //token is device_id of provider to whom we want to send notification.
+              $fields = array(
+                   'to' => $token,
+                   'data' => $push_message
+                 );
+              //FCM SERVER KEY FOR USER APP IN AUTHORIZATION:KEY
+              $headers = array(
+                    'Authorization:key =AAAABJCAoaQ:APA91bF1cbLoMIzQPSKk14xvyiap8XOvoy-r1WTqTw-0TLt-314PRUIP_BQRJiOYUPewOxAyYT0aBQWNwZILSriBy6ucc17eULee-xdfL8TnhLTgawdKug9ZnrQE8HyB33-0eAtPIl2T',
+                    'Content-Type: application/json'
+                  );
+              $ch = curl_init();
+              curl_setopt($ch, CURLOPT_URL, $url);
+              curl_setopt($ch, CURLOPT_POST, true);
+              curl_setopt($ch, CURLOPT_HTTPHEADER,$headers);
+              curl_setopt($ch, CURLOPT_RETURNTRANSFER,true);
+              curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,0);
+              curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
+              curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
 
-            	if($provider->type == 'ios'){
-            		
-            		return \PushNotification::app('IOSProvider')
-        	            ->to($provider->token)
-        	            ->send($push_message);
-
-            	}elseif($provider->type == 'android'){
-            		
-            		return \PushNotification::app('AndroidProvider')
-        	            ->to($provider->token)
-        	            ->send($push_message);
-
-            	}
+              $result = curl_exec($ch);
+              if($result === FALSE){
+               die('Curl Failed' . curl_error($ch));
+              }
+              curl_error($ch);
+              return $result;
+            	// if($provider->type == 'ios'){
+              //
+            	// 	return \PushNotification::app('IOSProvider')
+        	    //         ->to($provider->token)
+        	    //         ->send($push_message);
+              //
+            	// }elseif($provider->type == 'android'){
+              //
+            	// 	return \PushNotification::app('AndroidProvider')
+        	    //         ->to($provider->token)
+        	    //         ->send($push_message);
+              //
+            	// }
             }
 
     	} catch(Exception $e){
