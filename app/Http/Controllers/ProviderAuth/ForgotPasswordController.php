@@ -50,4 +50,6 @@ class ForgotPasswordController extends Controller
     {
         return Password::broker('providers');
     }
+
+  
 }

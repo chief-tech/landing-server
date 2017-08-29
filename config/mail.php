@@ -42,7 +42,7 @@ return [
     |
     */
 
-    'port' => env('MAIL_PORT', 587),
+    'port' => env('MAIL_PORT', 2525),
 
     /*
     |--------------------------------------------------------------------------
@@ -111,5 +111,12 @@ return [
     */
 
     'sendmail' => '/usr/sbin/sendmail -bs',
+
+    /*for AWS SES MAIL SERVICE*/
+     'ses' => [
+    'key' => 'AKIAIM3LZ5EAB6LIL4GA',
+    'secret' => '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',
+    'region' => 'us-west-oregon',
+],
 
 ];

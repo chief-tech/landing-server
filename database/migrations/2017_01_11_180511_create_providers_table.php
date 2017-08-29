@@ -18,6 +18,8 @@ class CreateProvidersTable extends Migration
             $table->string('last_name');
             $table->string('email')->unique();
             $table->string('mobile')->nullable();
+            $table->boolean('confirmation')->default(0);
+            $table->string('token', 254)->nullable();
             $table->string('password');
             $table->string('avatar')->nullable();
             $table->decimal('rating', 4, 2)->default(5);

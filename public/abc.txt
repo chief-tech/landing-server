@@ -1,0 +1,16 @@
+POST /login HTTP/1.1
+Accept:                    text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8
+Accept-Encoding:           gzip, deflate, br
+Accept-Language:           en-US,en;q=0.8
+Cache-Control:             max-age=0
+Connection:                keep-alive
+Content-Length:            91
+Content-Type:              application/x-www-form-urlencoded
+Cookie:                    _ga=GA1.1.1076114516.1502632552; XSRF-TOKEN=eyJpdiI6IlNGN0U5OVQzTEszRXJEM0VQb1VVelE9PSIsInZhbHVlIjoia2RWU3FBNlJEakQ3dkNQc0VIM1kybGFVYWVcL2ZvNTlvbjlGWENLdVFJUzZWYVNGVWxNYnB3Rlo5b1wvcklwOTBSSDR6NytQNUdpOE1kc3pWZUVMTkl5UT09IiwibWFjIjoiZmI1MTIyZjJkNmY0Y2VmZDJjODEyNjcwMmY4MGYzMjliZjhmNzQ3ZTAzZGVjZjY3MDBjYzU5ODYxNjEyMjJkOSJ9; laravel_session=eyJpdiI6IjFHZmpBSGsrRUdsMG1QaXdmMGMyMEE9PSIsInZhbHVlIjoiYXQ4Sm5xSXkxdmRvYjFcL0RiWlBZYjBOamdNSllVU0k2b3R2WjJRbkF6WmhESk9JOFZaeVkyWHRocklTYzZhV3Z4cWwxbVZLRUxieU14NjJkaERDd3VRPT0iLCJtYWMiOiJjZmQ3YmJkNGI4NzE3YTY3ZDIzNGYxM2U4OTdkMmRiYThkOTljZmI0YWM3MmE3MDdmZjRmZDUyOTM3ZTdlMjdjIn0%3D
+Host:                      localhost
+Origin:                    http://localhost
+Referer:                   http://localhost/login
+Upgrade-Insecure-Requests: 1
+User-Agent:                Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.101 Safari/537.36
+
+_token=SlqaTNxV1Lkp2rdQ7Fs2hAGT8sb2quQIfxGc84Ch&email=tahoor%40shopistan.pk&password=tahoor

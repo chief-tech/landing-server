@@ -34,7 +34,6 @@
                         <tr data-toggle="collapse" data-target="#trip_{{$trip->id}}" class="accordion-toggle collapsed">
                             <td><span class="arrow-icon fa fa-chevron-right"></span></td>
                             <td>{{date('d-m-Y',strtotime($trip->assigned_at))}}</td>
-                            <td>{{$trip->provider->first_name}} {{$trip->provider->last_name}}</td>
                             <td>{{currency($trip->payment->total)}}</td>
                             <td>{{$trip->service_type->name}}</td>
                             <td>@lang('user.paid_via') {{$trip->payment_mode}}</td>
@@ -44,11 +43,11 @@
                                 <div class="accordian-body collapse row" id="trip_{{$trip->id}}">
                                     <div class="col-md-6">
                                         <div class="my-trip-left">
-                                        <?php 
+                                        <?php
                                     $map_icon = asset('asset/marker.png');
                                     $static_map = "https://maps.googleapis.com/maps/api/staticmap?autoscale=1&size=600x450&maptype=roadmap&format=png&visual_refresh=true&markers=icon:".$map_icon."%7C".$trip->s_latitude.",".$trip->s_longitude."&markers=icon:".$map_icon."%7C".$trip->d_latitude.",".$trip->d_longitude."&path=color:0x191919|weight:8|".$trip->s_latitude.",".$trip->s_longitude."|".$trip->d_latitude.",".$trip->d_longitude."&key=".env('GOOGLE_MAP_KEY'); ?>
                                             <div class="map-static" style="background-image: url({{$static_map}});">
-                                                
+
                                             </div>
                                             <div class="from-to row no-margin">
                                                 <div class="from">

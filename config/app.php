@@ -120,7 +120,7 @@ return [
     |
     */
 
-    'log' => env('APP_LOG', 'single'),
+    'log' => 'daily',
 
     'log_level' => env('APP_LOG_LEVEL', 'debug'),
 
@@ -162,6 +162,7 @@ return [
         Illuminate\Translation\TranslationServiceProvider::class,
         Illuminate\Validation\ValidationServiceProvider::class,
         Illuminate\View\ViewServiceProvider::class,
+        LaravelFCM\FCMServiceProvider::class,
 
         /*
          * Package Service Providers...
@@ -235,6 +236,8 @@ return [
         'Socialite' => Laravel\Socialite\Facades\Socialite::class,
         'JWTAuth' => 'Tymon\JWTAuth\Facades\JWTAuth',
         'JWTFactory' => 'Tymon\JWTAuth\Facades\JWTFactory',
-        'PushNotification' => 'Davibennun\LaravelPushNotification\Facades\PushNotification'
+        'PushNotification' => 'Davibennun\LaravelPushNotification\Facades\PushNotification',
+        'FCM'      => LaravelFCM\Facades\FCM::class,
+	      'FCMGroup' => LaravelFCM\Facades\FCMGroup::class
     ],
 ];

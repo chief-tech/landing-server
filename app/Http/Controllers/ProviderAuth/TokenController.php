@@ -59,7 +59,7 @@ class TokenController extends Controller
             }
             return abort(500);
         }
-        
+
     }
 
     /**
