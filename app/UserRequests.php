@@ -39,7 +39,7 @@ class UserRequests extends Model
     {
         return $this->belongsTo('App\ServiceType');
     }
-    
+
     /**
      * UserRequestPayment Model Linked
      */
@@ -90,7 +90,7 @@ class UserRequests extends Model
         return $query->where('user_requests.user_id', '=', $user_id)
                     ->where('user_requests.status', '=', 'COMPLETED')
                     ->select('user_requests.*')
-                    ->with('payment','service_type');
+                    ->with('payment','service_type','provider');
     }
 
     public function scopeUserTripDetails($query, $user_id, $request_id)
