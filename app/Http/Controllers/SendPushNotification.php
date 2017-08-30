@@ -65,7 +65,6 @@ class SendPushNotification extends Controller
           if($user->device_token != ""){
             $url = "https://fcm.googleapis.com/fcm/send";
             $token = $user->device_token;
-            $token = 'cVq4OCC3_LM:APA91bGCwAGlcvFLlQSSpct8oIaLDJzdpYuTc9cyq1dB-poG9LuC_q4Y_ApviKNzV8LnK58yb2ub73jRSgdGl0F8pUSoQx4qHryAGQ8hofYcwIPNcuG-gRwklV9muDN56eSOvvmbJCLr';
             $message = array('data' => $push_message);
             var_dump($fields); die();
             //token is device_id of user to whom we want to send notification.
