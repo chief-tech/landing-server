@@ -91,7 +91,7 @@ class TripController extends Controller
                 'rating' => 'required|integer|in:1,2,3,4,5',
                 'comment' => 'max:255',
             ]);
-    
+
         try {
 
             $UserRequest = UserRequests::where('id', $id)
@@ -118,7 +118,7 @@ class TripController extends Controller
             // Delete from filter so that it doesn't show up in status checks.
             RequestFilter::where('request_id', $id)->delete();
 
-            // Send Push Notification to Provider 
+            // Send Push Notification to Provider
             $average = UserRequestRating::where('provider_id', $UserRequest->provider_id)->avg('provider_rating');
 
             $UserRequest->user->update(['rating' => $average]);
@@ -220,17 +220,40 @@ class TripController extends Controller
                 if($request->status == 'ARRIVED'){
                     (new SendPushNotification)->Arrived($UserRequest);
                 }
+
             }
             $UserRequest->save();
 
-            if($request->status == 'DROPPED') {
+            if($request->status == 'DROPPED' && ($UserRequest->d_longitude != 0 && $UserRequest->d_latitude != 0)) {
                 $UserRequest->with('user')->findOrFail($id);
                 $UserRequest->invoice = $this->invoice($id);
                 return $UserRequest;
             }
+            else if($request->status == 'DROPPED' && ($UserRequest->d_longitude == 0 && $UserRequest->d_latitude == 0)){
+              // $UserRequest->with('user')->findOrFail($id);
+              // $UserRequest->distance = 6;
+              // $UserRequest->d_address = "Emporium Mall by Nishat Group, Lahore, Pakistan";
+                $UserRequest->with('user')->findOrFail($id);
+                $UserRequest->d_latitude = $request->d_latitude;
+                $UserRequest->d_longitude = $request->d_longitude;
+                $UserRequest->save();
+                $details = "http://maps.googleapis.com/maps/api/distancematrix/json?origins=".$UserRequest->s_latitude.",".$UserRequest->s_longitude."&destinations=".$UserRequest->d_latitude.",".$UserRequest->d_longitude."&mode=driving&sensor=false";
+                $json = file_get_contents($details);
+                $details = json_decode($json, TRUE);
+                $meter = $details['rows'][0]['elements'][0]['distance']['value'];
+                $time = $details['rows'][0]['elements'][0]['duration']['text'];
+                $kilometer = round($meter/1000);
+                $UserRequest->distance = $kilometer;
+                $UserRequest->save();
+                $UserRequest->invoice = $this->invoice($id);
+                return $UserRequest;
+              //return view('provider.location.index');
+
+
+            }
 
             // Send Push Notification to User
-       
+
             return $UserRequest;
 
         } catch (ModelNotFoundException $e) {
@@ -288,7 +311,7 @@ class TripController extends Controller
 
             // incoming request push to provider
             (new SendPushNotification)->IncomingRequest($UserRequest->current_provider_id);
-            
+
         } catch (ModelNotFoundException $e) {
             UserRequests::where('id', $UserRequest->id)->update(['status' => 'CANCELLED']);
 
@@ -301,7 +324,7 @@ class TripController extends Controller
     {
         try {
             $UserRequest = UserRequests::findOrFail($request_id);
-            
+
             $Fixed = $UserRequest->service_type->fixed ? : 0;
             $Distance = ceil($UserRequest->distance) * $UserRequest->service_type->price;
             $Discount = 0; // Promo Code discounts should be added here.
@@ -350,7 +373,7 @@ class TripController extends Controller
                         User::where('id',$UserRequest->user_id)->update(['wallet_balance' => 0 ]);
                         $Payment->total = abs($Payable);
 
-                        // charged wallet money push 
+                        // charged wallet money push
                         (new SendPushNotification)->ChargedWalletMoney($UserRequest->user_id,currency($Wallet));
 
                     }else{
@@ -360,7 +383,7 @@ class TripController extends Controller
                         User::where('id',$UserRequest->user_id)->update(['wallet_balance' => $WalletBalance]);
                         $Payment->wallet = $Total;
 
-                        // charged wallet money push 
+                        // charged wallet money push
                         (new SendPushNotification)->ChargedWalletMoney($UserRequest->user_id,currency($Total));
                     }
 
@@ -392,7 +415,7 @@ class TripController extends Controller
             ]);
 
         if($request->ajax()) {
-            
+
             $Jobs = UserRequests::where('id',$request->request_id)
                                 ->where('provider_id', Auth::user()->id)
                                 ->with('payment','service_type','user','rating')

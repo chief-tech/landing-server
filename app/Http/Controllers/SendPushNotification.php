@@ -65,10 +65,13 @@ class SendPushNotification extends Controller
           if($user->device_token != ""){
             $url = "https://fcm.googleapis.com/fcm/send";
             $token = $user->device_token;
+            $token = 'cVq4OCC3_LM:APA91bGCwAGlcvFLlQSSpct8oIaLDJzdpYuTc9cyq1dB-poG9LuC_q4Y_ApviKNzV8LnK58yb2ub73jRSgdGl0F8pUSoQx4qHryAGQ8hofYcwIPNcuG-gRwklV9muDN56eSOvvmbJCLr';
+            $message = array('data' => $push_message);
+            var_dump($fields); die();
             //token is device_id of user to whom we want to send notification.
             $fields = array(
                  'to' => $token,
-                 'data' => $push_message
+                 'data' => $message
                );
             //FCM SERVER KEY FOR USER APP IN AUTHORIZATION:KEY
             $headers = array(
@@ -84,6 +87,7 @@ class SendPushNotification extends Controller
            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
            $result = curl_exec($ch);
+           var_dump($result); die();
            if($result === FALSE){
             // die('Curl Failed' . curl_error($ch));
              return response()->json(['error' => 'Curl Failed' . curl_error($ch)], 500);
@@ -134,11 +138,13 @@ class SendPushNotification extends Controller
 	    	$provider = ProviderDevice::where('provider_id',$provider_id)->first();
             if($provider->token != ""){
               $url = "https://fcm.googleapis.com/fcm/send";
-              $token = $provider->device_token;
+              $token = $provider->token;
               //token is device_id of provider to whom we want to send notification.
+
+              $message = array('data' => $push_message);
               $fields = array(
                    'to' => $token,
-                   'data' => $push_message
+                   'data' => $message
                  );
               //FCM SERVER KEY FOR USER APP IN AUTHORIZATION:KEY
               $headers = array(
@@ -155,7 +161,9 @@ class SendPushNotification extends Controller
               curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
               $result = curl_exec($ch);
               if($result === FALSE){
-               die('Curl Failed' . curl_error($ch));
+                return response()->json(['error' => 'Curl Failed' . curl_error($ch)], 500);
+
+              // die('Curl Failed' . curl_error($ch));
               }
               curl_error($ch);
               return $result;
