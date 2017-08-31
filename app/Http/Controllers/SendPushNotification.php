@@ -30,6 +30,13 @@ class SendPushNotification extends Controller
     public function IncomingRequest($provider){
         return $this->sendPushToProvider($provider, trans('api.push.incoming_request'));
     }
+
+    public function VerifyEmail($provider){
+        return $this->sendPushToProvider($provider, trans('api.push.email_verify'));
+    }
+    public function VerifyUserEmail($user){
+        return $this->sendPushToProvider($user, trans('api.push.email_verify'));
+    }
     /**
      * Driver Documents verfied.
      *
@@ -65,8 +72,10 @@ class SendPushNotification extends Controller
           if($user->device_token != ""){
             $url = "https://fcm.googleapis.com/fcm/send";
             $token = $user->device_token;
+
+          //  $token = 'dFMbDBu9-oU:APA91bGX3bev5rsPeBIAx9OBDupZqEX8VfC09cBjBU30SwrIQcw0cFZaN3kJkioBz6p2Wa_jq6-RhHMEFqb5DBOthA4aRpzPY2ybSGLbRJBwR9IRtEOpZz1M8Ea-ssc8Ykd76se3OT44';
             $message = array('data' => $push_message);
-            var_dump($fields); die();
+          //  var_dump($fields); die();
             //token is device_id of user to whom we want to send notification.
             $fields = array(
                  'to' => $token,
@@ -86,12 +95,12 @@ class SendPushNotification extends Controller
            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
            $result = curl_exec($ch);
-           var_dump($result); die();
+           //var_dump($result); die();
            if($result === FALSE){
             // die('Curl Failed' . curl_error($ch));
              return response()->json(['error' => 'Curl Failed' . curl_error($ch)], 500);
          }
-         curl_error($ch);
+         curl_close($ch);
          return $result;
        }
      }
@@ -139,12 +148,12 @@ class SendPushNotification extends Controller
               $url = "https://fcm.googleapis.com/fcm/send";
               $token = $provider->token;
               //token is device_id of provider to whom we want to send notification.
-
               $message = array('data' => $push_message);
               $fields = array(
                    'to' => $token,
                    'data' => $message
                  );
+          //      var_dump($fields);
               //FCM SERVER KEY FOR USER APP IN AUTHORIZATION:KEY
               $headers = array(
                     'Authorization:key =AAAABJCAoaQ:APA91bF1cbLoMIzQPSKk14xvyiap8XOvoy-r1WTqTw-0TLt-314PRUIP_BQRJiOYUPewOxAyYT0aBQWNwZILSriBy6ucc17eULee-xdfL8TnhLTgawdKug9ZnrQE8HyB33-0eAtPIl2T',
@@ -159,12 +168,13 @@ class SendPushNotification extends Controller
               curl_setopt($ch, CURLOPT_SSL_VERIFYPEER,false);
               curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fields));
               $result = curl_exec($ch);
+            //  var_dump($result); die();
               if($result === FALSE){
                 return response()->json(['error' => 'Curl Failed' . curl_error($ch)], 500);
 
               // die('Curl Failed' . curl_error($ch));
               }
-              curl_error($ch);
+              curl_close($ch);
               return $result;
             	// if($provider->type == 'ios'){
               //

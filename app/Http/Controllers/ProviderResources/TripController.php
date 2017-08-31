@@ -391,6 +391,8 @@ class TripController extends Controller
 
             }else{
                 $Payment->total = abs($Total);
+                (new SendPushNotification)->ChargedWalletMoney($UserRequest->user_id,currency($Total));
+
             }
 
             $Payment->tax = $Tax;
