@@ -6,7 +6,10 @@ use App\User;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Foundation\Auth\RegistersUsers;
+use Illuminate\Http\Request;
+use Auth;
 
+use Mail;
 class RegisterController extends Controller
 {
     /*
@@ -74,7 +77,7 @@ class RegisterController extends Controller
         // send welcome email here
     }
 
-    
+
     /**
      * Show the application registration form.
      *
@@ -83,5 +86,45 @@ class RegisterController extends Controller
     public function showRegistrationForm()
     {
         return view('user.auth.register');
+    }
+
+    protected function register(Request $request){
+      $input = $request->all();
+      $validator = $this->validator($input);
+      $validator->validate();
+  //    var_dump($validator->passes());
+      //die();
+      if($validator->passes()){
+        $data = $this->create($input)->toArray();
+        $data['token'] = str_random(25);
+        $user = User::find($data['id']);
+        $user->token = $data['token'];
+        $user->save();
+
+        Mail::send('provider.mail.confirmation', $data, function($message) use($data){
+              $message->to($data['email']);
+              $message->subject('VERIFY EMAIL ADDRESS');
+        });
+        //(new SendPushNotification)->VerifyUserEmail($user);
+        return redirect(url('login'))->with('status','A confirmation email has been send to your email address. Kindly check your email to verify.');
+
+      }
+      echo $validator->errors();
+    //  die();
+    //  return redirect(url('provider/login'))->with('status', $validator->errors());
+    }
+
+    public function confirmation($token){
+      $user = User::where('token', $token)->first();
+      if(!is_null($user)){
+        $user->confirmation =1;
+        $user->token = '';
+        $user->save();
+
+        return redirect(url('login'))->with('status','Congratulations, Your email is verified.');
+
+      }
+      return redirect(url('login'))->with('status','Something went wrong.');
+
     }
 }

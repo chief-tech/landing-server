@@ -26,6 +26,7 @@ Route::group(['prefix' => 'provider'], function () {
     Route::post('/password/reset', 'ProviderAuth\ResetPasswordController@reset');
     Route::get('/password/reset', 'ProviderAuth\ForgotPasswordController@showLinkRequestForm');
     Route::get('/password/reset/{token}', 'ProviderAuth\ResetPasswordController@showResetForm');
+    Route::get('/confirmation/{token}', 'ProviderAuth\RegisterController@confirmation')->name('confirmation');
 });
 
 Route::group(['prefix' => 'admin'], function () {
