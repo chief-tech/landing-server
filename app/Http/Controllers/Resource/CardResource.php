@@ -23,7 +23,7 @@ class CardResource extends Controller
         try{
 
             $cards = Card::where('user_id',Auth::user()->id)->orderBy('created_at','desc')->get();
-            return $cards; 
+            return $cards;
 
         } catch(Exception $e){
             return response()->json(['error' => $e->getMessage()], 500);
@@ -37,7 +37,7 @@ class CardResource extends Controller
      */
     public function create()
     {
-        //  
+        //
     }
 
     /**
@@ -48,9 +48,10 @@ class CardResource extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request,[
-                'stripe_token' => 'required'
+         $this->validate($request,[
+                'stripe_token' => 'required',
             ]);
+
 
         try{
 
@@ -67,7 +68,7 @@ class CardResource extends Controller
             $create_card->save();
 
             if($request->ajax()){
-                return response()->json(['message' => 'Card Added']); 
+                return response()->json(['message' => 'Card Added']);
             }else{
                 return back()->with('flash_success','Card Added');
             }
@@ -78,7 +79,7 @@ class CardResource extends Controller
             }else{
                 return back()->with('flash_error',$e->getMessage());
             }
-        } 
+        }
     }
 
     /**
@@ -139,7 +140,7 @@ class CardResource extends Controller
             Card::where('card_id',$request->card_id)->delete();
 
             if($request->ajax()){
-                return response()->json(['message' => 'Card Deleted']); 
+                return response()->json(['message' => 'Card Deleted']);
             }else{
                 return back()->with('flash_success','Card Deleted');
             }

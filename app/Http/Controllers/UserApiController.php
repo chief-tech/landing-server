@@ -215,19 +215,14 @@ class UserApiController extends Controller
         $longitude = $request->s_longitude;
         $Providers = Provider::whereIn('id', $ActiveProviders)
             ->where('status', 'approved')
-            ->get();
+             ->whereRaw("(1.609344 * 3956 * acos( cos( radians('$latitude') ) * cos( radians(latitude) ) * cos( radians(longitude) - radians('$longitude') ) + sin( radians('$latitude') ) * sin( radians(latitude) ) ) ) <= $distance")
+             ->get();
       // $theta = $lon1 - $lon2;
       // $dist = sin(deg2rad($lat1)) * sin(deg2rad($lat2)) +  cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * cos(deg2rad($theta));
       // $dist = acos($dist);
       // $dist = rad2deg($dist);
       // $miles = $dist * 60 * 1.1515;
-          //  ->whereRaw("(1.609344 * 3956 * acos( cos( radians('$latitude') ) * cos( radians(latitude) ) * cos( radians(longitude) - radians('$longitude') ) + sin( radians('$latitude') ) * sin( radians(latitude) ) ) ) <= $distance")
-          //  ->toSql();
-    //    dd($Providers);
-          //  $d = (1.609344 * 3956 * acos( cos( radians('$latitude') ) * cos( radians(latitude) ) * cos( radians(longitude) - radians('$longitude') ) + sin( radians('$latitude') ) * sin( radians(latitude) ) ) );
-          //  echo "distance is " . $distance . "And Calculated Distance is "  ;
-        //    var_dump($Providers);
-          //  die();
+      
         // List Providers who are currently busy and add them to the filter list.
         if(count($Providers) == 0) {
             if($request->ajax()) {
