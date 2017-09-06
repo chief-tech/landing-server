@@ -26,8 +26,12 @@ Route::group(['prefix' => 'provider'], function () {
     Route::post('/password/reset', 'ProviderAuth\ResetPasswordController@reset');
     Route::get('/password/reset', 'ProviderAuth\ForgotPasswordController@showLinkRequestForm');
     Route::get('/password/reset/{token}', 'ProviderAuth\ResetPasswordController@showResetForm');
-    Route::get('/confirmation/{token}', 'ProviderAuth\RegisterController@confirmation')->name('confirmation');
+    Route::get('/confirmation/{token}', 'ProviderAuth\RegisterController@confirmation')->name('provider_confirmation');
+
 });
+
+// Route::get('provider/login/{provider}', 'ProviderAuth\LoginController@redirectToProvider');
+// Route::get('provider/login/{provider}/callback', 'ProviderAuth\LoginController@handleProviderCallback');
 
 Route::group(['prefix' => 'admin'], function () {
     Route::get('/login', 'AdminAuth\LoginController@showLoginForm');
@@ -112,6 +116,14 @@ Route::resource('card', 'Resource\CardResource');
 // promotions
 Route::get('/promotion', 'HomeController@promotion');
 Route::post('/add/promocode', 'HomeController@add_promocode');
+
+// social site login
+// Route::get('login/{provider}', 'Auth\LoginController@redirectToProvider');
+// Route::get('login/{provider}/callback', 'Auth\LoginController@handleProviderCallback');
+
+//email verification
+Route::get('/confirmation/{token}', 'Auth\RegisterController@confirmation')->name('user_confirmation');
+
 
 Route::get('/send/push',
     function(){

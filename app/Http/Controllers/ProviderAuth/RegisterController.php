@@ -9,10 +9,7 @@ use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\SendPushNotification;
-use App\Provider;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Auth;
-
 use Mail;
 
 
@@ -120,7 +117,6 @@ class RegisterController extends Controller
         return redirect(url('provider/login'))->with('status','A confirmation email has been send to your email address. Kindly check your email to verify.');
 
       }
-      echo $validator->errors();
     //  die();
     //  return redirect(url('provider/login'))->with('status', $validator->errors());
     }
