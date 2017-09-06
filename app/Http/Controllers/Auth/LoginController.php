@@ -100,10 +100,10 @@ class LoginController extends Controller
                 $this->username() => Lang::get('auth.EmailNotVerified'),
             ]);
     }
-    public function redirectToProvider($provider)
-    {
-        return Socialite::driver($provider)->redirect();
-    }
+    // public function redirectToProvider($provider)
+    // {
+    //     return Socialite::driver($provider)->redirect();
+    // }
 
     // public function handleProviderCallback($provider)
     // {
