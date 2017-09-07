@@ -3,5 +3,6 @@ Hi {{ $first_name }},
 <a href="{{ route('user_confirmation', $token) }}">
 <button type="submit" class="log-teal-btn">
   VERIFY EMAIL
+  
 </button>
 </a>
