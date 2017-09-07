@@ -26,7 +26,7 @@ Route::group(['prefix' => 'provider'], function () {
     Route::post('/password/reset', 'ProviderAuth\ResetPasswordController@reset');
     Route::get('/password/reset', 'ProviderAuth\ForgotPasswordController@showLinkRequestForm');
     Route::get('/password/reset/{token}', 'ProviderAuth\ResetPasswordController@showResetForm');
-    Route::get('/confirmation/{token}', 'ProviderAuth\RegisterController@confirmation')->name('provider_confirmation');
+    Route::get('/confirmation/{token}', 'ProviderAuth\RegisterController@confirmation')->name('confirmation');
 
 });
 
@@ -122,7 +122,6 @@ Route::post('/add/promocode', 'HomeController@add_promocode');
 // Route::get('login/{provider}/callback', 'Auth\LoginController@handleProviderCallback');
 
 //email verification
-Route::get('/confirmation/{token}', 'Auth\RegisterController@confirmation')->name('user_confirmation');
 
 
 Route::get('/send/push',

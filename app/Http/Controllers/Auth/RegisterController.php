@@ -101,7 +101,7 @@ class RegisterController extends Controller
         $user->token = $data['token'];
         $user->save();
 
-        Mail::send('user.mail.confirmation', $data, function($message) use($data){
+        Mail::send('provider.mail.confirmation', $data, function($message) use($data){
               $message->to($data['email']);
               $message->subject('VERIFY EMAIL ADDRESS');
         });
