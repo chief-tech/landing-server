@@ -35,7 +35,7 @@ class SendPushNotification extends Controller
         return $this->sendPushToProvider($provider, trans('api.push.email_verify'));
     }
     public function VerifyUserEmail($user){
-        return $this->sendPushToProvider($user, trans('api.push.email_verify'));
+        return $this->sendPushToUser($user, trans('api.push.email_verify'));
     }
     /**
      * Driver Documents verfied.
@@ -61,6 +61,9 @@ class SendPushNotification extends Controller
     public function ChargedWalletMoney($user_id, $money){
         return $this->sendPushToUser($user_id, $money.' '.trans('api.push.charged_from_wallet'));
     }
+    // public function VerifyUserEmail($user_id){
+    //     return $this->sendPushToUser($user_id, 'Kindly verify your email ');
+    // }
     /**
      * Sending Push to a user Device.
      *

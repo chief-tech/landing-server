@@ -21,6 +21,8 @@ use App\Settings;
 use App\UserRequestRating;
 use App\Card;
 use App\PromocodeUsage;
+
+use Mail;
 class UserApiController extends Controller
 {
     /**
@@ -28,6 +30,54 @@ class UserApiController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+
+    public function login_access(Request $request){
+      $this->validate($request, [
+              'grant_type' => 'required',
+              'client_secret' => 'required',
+              'client_id' => 'required|max:255',
+              'email' => 'nullable',
+              'password' => 'nullable',
+              'social_unique_id' => 'nullable',
+          ]);
+      $email = $request->email;
+      if($request->email != "" && $request->password != ""){
+      if(Auth::attempt(['email' => $email, 'password' => $request->password])){
+            $user = Auth::user();
+            $s = $user->createToken('MyApp');
+            $success['access_token'] =  $s->accessToken;
+
+            // $success['refresh_token'] =  $s->refreshToken;
+            if(Auth::user()->confirmation != 0)
+            return response()->json(['success' => $success], 200);
+            else {
+              Auth::logout();
+              return response()->json(['error' => 'Your email is not verified'], 401);
+            }
+        }
+        else{
+          return response()->json(['error' => 'The email address or password you entered is incorrect.'], 401);
+        }
+      }
+      else if($request->social_unique_id != ""){
+        $authUser = User::where('social_unique_id', $request->social_unique_id)->first();
+        if ($authUser) {
+          Auth::login($authUser, true);
+          $user = Auth::user();
+          $s = $user->createToken('MyApp');
+          $success['access_token'] =  $s->accessToken;
+          if(Auth::user()->confirmation != 0)
+          return response()->json(['success' => $success], 200);
+          else {
+            Auth::logout();
+            return response()->json(['message' => 'Your email is not verified']);
+          }
+        }
+        else {
+          return response()->json(['message' => 'not']);
+        }
+      }
+    }
     public function signup(Request $request)
     {
         $this->validate($request, [
@@ -37,17 +87,39 @@ class UserApiController extends Controller
                 'device_id' => 'required',
                 'login_by' => 'required|in:manual,facebook,google',
                 'first_name' => 'required|max:255',
-                'last_name' => 'required|max:255',
-                'email' => 'required|email|max:255|unique:users',
+                'last_name' => 'nullable|max:255',
+                'email' => 'nullable|email|max:255|unique:users',
                 'mobile' => 'required|digits_between:6,13',
-                'password' => 'required|min:6',
+                'password' => 'nullable|min:6',
+                'social_unique_id' => 'nullable|unique:users',
             ]);
         try{
             $User = $request->all();
             $User['payment_mode'] = 'CASH';
             $User['password'] = bcrypt($request->password);
             $User = User::create($User);
-            return $User;
+
+            if($request->social_unique_id != ""){
+              $User->social_unique_id = $request->social_unique_id;
+              $User->confirmation = 1;
+            }
+            $user_data = $request->all();
+            $data = $User->toArray();
+            $data['token'] = str_random(25);
+            $user = User::find($data['id']);
+            $user->token = $data['token'];
+
+            $user->save();
+
+            Mail::send('user.mail.confirmation', $data, function($message) use($data){
+                  $message->to($data['email']);
+                  $message->subject('VERIFY EMAIL ADDRESS');
+            });
+            (new SendPushNotification)->VerifyUserEmail($user);
+          //  return redirect(url('login'))->with('status','A confirmation email has been send to your email address. Kindly check your email to verify.');
+            return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email']);
+
+          //  return $User;
         } catch (Exception $e) {
              return response()->json(['error' => trans('api.something_went_wrong')], 500);
         }
@@ -222,7 +294,7 @@ class UserApiController extends Controller
       // $dist = acos($dist);
       // $dist = rad2deg($dist);
       // $miles = $dist * 60 * 1.1515;
-      
+
         // List Providers who are currently busy and add them to the filter list.
         if(count($Providers) == 0) {
             if($request->ajax()) {
