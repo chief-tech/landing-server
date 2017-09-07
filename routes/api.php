@@ -10,9 +10,8 @@
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-
 Route::post('/signup' , 'UserApiController@signup');
-
+Route::post('oauth/token', 'UserApiController@login_access');
 Route::group(['middleware' => ['auth:api']], function () {
 
 	// user profile
@@ -38,13 +37,13 @@ Route::group(['middleware' => ['auth:api']], function () {
 	Route::post('/send/request' , 'UserApiController@send_request');
 
 	Route::post('/cancel/request' , 'UserApiController@cancel_request');
-	
+
 	Route::get('/request/check' , 'UserApiController@request_status_check');
 
 	// history
 
 	Route::get('/trips' , 'UserApiController@trips');
-	
+
 	Route::get('/trip/details' , 'UserApiController@trip_details');
 
 	// payment

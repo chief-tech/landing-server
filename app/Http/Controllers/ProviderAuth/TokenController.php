@@ -5,6 +5,7 @@ namespace App\Http\Controllers\ProviderAuth;
 use Illuminate\Http\Request;
 use Illuminate\Database\QueryException;
 use App\Http\Controllers\Controller;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 use Tymon\JWTAuth\Exceptions\JWTException;
 
@@ -59,7 +60,7 @@ class TokenController extends Controller
             }
             return abort(500);
         }
-        
+
     }
 
     /**
@@ -86,12 +87,21 @@ class TokenController extends Controller
             if (! $token = JWTAuth::attempt($credentials)) {
                 return response()->json(['error' => 'The email address or password you entered is incorrect.'], 401);
             }
+            else{
+              $provider = Provider::find(Auth::user()->id);
+              if($provider->confirmation == 0){
+                Auth::logout();
+                return response()->json(['error' => 'Your email is not verified'], 401);
+
+              }
+            }
+
+
         } catch (JWTException $e) {
             return response()->json(['error' => 'Something went wrong, Please try again later!'], 500);
         }
 
         $User = Provider::with('service', 'device')->find(Auth::user()->id);
-
         $User->access_token = $token;
         $User->currency = currency();
 
