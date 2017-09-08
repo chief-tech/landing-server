@@ -11,7 +11,13 @@
 |
 */
 Route::post('/signup' , 'UserApiController@signup');
+//login request
 Route::post('oauth/token', 'UserApiController@login_access');
+//email confirmation
+Route::get('/confirmation/{token}', 'UserApiController@confirmation')->name('confirmation');
+//resend email
+Route::post('/resendEmail', 'UserApiController@resend_email');
+
 Route::group(['middleware' => ['auth:api']], function () {
 
 	// user profile

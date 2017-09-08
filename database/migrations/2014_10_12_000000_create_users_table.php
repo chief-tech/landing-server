@@ -26,6 +26,8 @@ class CreateUsersTable extends Migration
             $table->enum('device_type',array('android','ios'));
             $table->enum('login_by',array('manual','facebook','google'));
             $table->string('social_unique_id')->nullable();
+            $table->boolean('confirmation')->default(0);
+            $table->string('token')->nullable();
             $table->string('mobile')->nullable();
             $table->double('latitude', 15, 8)->nullable();
             $table->double('longitude',15,8)->nullable();

@@ -37,6 +37,15 @@ class SendPushNotification extends Controller
     public function VerifyUserEmail($user){
         return $this->sendPushToUser($user, trans('api.push.email_verify'));
     }
+    public function UserEmailVerified($user){
+        return $this->sendPushToUser($user, 'Your email is verified');
+    }
+    public function VerifyProviderEmail($provider){
+        return $this->sendPushToProvider($provider, trans('api.push.email_verify'));
+    }
+    public function ProviderEmailVerified($provider){
+        return $this->sendPushToUser($provider, 'Your email is verified');
+    }
     /**
      * Driver Documents verfied.
      *

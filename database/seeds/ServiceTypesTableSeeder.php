@@ -18,8 +18,8 @@ class ServiceTypesTableSeeder extends Seeder
             [
                 'name' => 'Sedan',
                 'provider_name' => 'Driver',
-                'fixed' => 20,
-                'price' => 10,
+                'fixed' => 1.25,
+                'price' => 1.25,
                 'status' => 1,
                 'image' => asset('asset/img/cars/sedan.png'),
                 'created_at' => Carbon::now(),
