@@ -147,7 +147,7 @@ class UserApiController extends Controller
                 'login_by' => 'required|in:manual,facebook,google',
                 'first_name' => 'required|max:255',
                 'last_name' => 'nullable|max:255',
-                'email' => 'nullable|email|max:255|unique:users',
+                'email' => 'required|email|max:255|unique:users',
                 'mobile' => 'required|digits_between:6,13',
                 'password' => 'nullable|min:6',
                 'social_unique_id' => 'nullable|unique:users',
@@ -159,18 +159,20 @@ class UserApiController extends Controller
             $User['password'] = bcrypt($request->password);
           }
             $User = User::create($User);
-
-            if($request->social_unique_id != ""){
-              $User->social_unique_id = $request->social_unique_id;
-              $User->confirmation = 1;
-            }
-            $user_data = $request->all();
             $data = $User->toArray();
-            $data['token'] = str_random(25);
             $user = User::find($data['id']);
-            $user->token = $data['token'];
+            if($request->social_unique_id != ""){
+              $user->update(['login_by' => 'facebook']);
+            }
 
-            $user->save();
+              $token = str_random(25);
+              // $user = User::find($data['id']);
+              $user = User::find($data['id']);
+              $user->update(['token' => $token]);
+
+              $data = $user->toArray();
+
+            //  return response()->json(['data'=>$data['token']]);
 
             Mail::send('user.mail.confirmation', $data, function($message) use($data){
                   $message->to($data['email']);
