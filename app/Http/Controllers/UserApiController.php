@@ -57,7 +57,7 @@ class UserApiController extends Controller
             }
         }
         else{
-          return response()->json(['error' => 'The email address or password you entered is incorrect.'], 401);
+          return response()->json(['error' => 'The email address or password you entered is incorrect.'], 400);
         }
       }
       else if($request->social_unique_id != ""){
@@ -71,13 +71,71 @@ class UserApiController extends Controller
           return response()->json(['success' => $success], 200);
           else {
             Auth::logout();
-            return response()->json(['message' => 'Your email is not verified']);
+            return response()->json(['message' => 'Your email is not verified'], 401);
           }
         }
         else {
-          return response()->json(['message' => 'not']);
+          return response()->json(['error' => 'Invalid Login Request'], 402);
         }
       }
+    }
+
+    public function confirmation($token){
+      try{
+      $user = User::where('token', '=', $token)->first();
+
+      if(!is_null($user)){
+        $user->update(['confirmation' => 1,'token' => '',]);
+        (new SendPushNotification)->UserEmailVerified($user);
+
+        return response()->json(['message' => 'Your email is verified'], 400);
+
+      }
+      else {
+        return response()->json(['error' => 'This Link is expired'], 403);
+
+      }
+    }
+    catch(Exception $e){
+      return response()->json(['error' => trans('api.something_went_wrong')], 500);
+
+    }
+
+    }
+    public function resend_email(Request $request){
+      $this->validate($request, [
+              'email' => 'required',
+          ]);
+      try{
+      $user = User::where('email', '=', $request->email)->first();
+
+      if(!is_null($user)){
+        $data = $user->toArray();
+        if($user->token == ""){
+          return response()->json(['message' => 'Your email is already verified'], 400);
+
+        }
+        $data['token'] = str_random(25);
+        //$user = User::find($data['id']);
+        $user->update(['token' => $data['token']]);
+
+        Mail::send('user.mail.confirmation', $data, function($message) use($data){
+              $message->to($data['email']);
+              $message->subject('VERIFY EMAIL ADDRESS');
+        });
+        (new SendPushNotification)->VerifyUserEmail($user);
+        return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 401);
+
+      }
+      else {
+        return response()->json(['error' => 'Email not found'], 402);
+
+      }
+    }
+    catch(Exception $e){
+      return response()->json(['error' => trans('api.something_went_wrong')], 500);
+
+    }
     }
     public function signup(Request $request)
     {
@@ -97,7 +155,9 @@ class UserApiController extends Controller
         try{
             $User = $request->all();
             $User['payment_mode'] = 'CASH';
+            if($request->password != ""){
             $User['password'] = bcrypt($request->password);
+          }
             $User = User::create($User);
 
             if($request->social_unique_id != ""){
@@ -118,7 +178,7 @@ class UserApiController extends Controller
             });
             (new SendPushNotification)->VerifyUserEmail($user);
           //  return redirect(url('login'))->with('status','A confirmation email has been send to your email address. Kindly check your email to verify.');
-            return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email']);
+            return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 401);
 
           //  return $User;
         } catch (Exception $e) {
@@ -546,19 +606,19 @@ class UserApiController extends Controller
             $details = json_decode($json, TRUE);
             $meter = $details['rows'][0]['elements'][0]['distance']['value'];
             $time = $details['rows'][0]['elements'][0]['duration']['text'];
-            $kilometer = round($meter/1000);
+            $miles = round($meter/1609.344497893);
             $tax_percentage = \Setting::get('tax_percentage');
             $commission_percentage = \Setting::get('commission_percentage');
             $service_type = ServiceType::findOrFail($request->service_type);
             $base_price = $service_type->fixed;
-            $price_per_kilometer = $service_type->price;
-            $price = $base_price + ($kilometer * $price_per_kilometer);
+            $price_per_mile = $service_type->price;
+            $price = $base_price + ($miles * $price_per_mile);
             $price += ( $commission_percentage/100 ) * $price;
             $tax_price = ( $tax_percentage/100 ) * $price;
             $total = $price + $tax_price;
             return response()->json([
                     'estimated_fare' => round($total,2),
-                    'distance' => $kilometer,
+                    'distance' => $miles,
                     'time' => $time,
                     'tax_price' => $tax_price,
                     'base_price' => $base_price,

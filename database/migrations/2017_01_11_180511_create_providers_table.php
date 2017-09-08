@@ -20,6 +20,9 @@ class CreateProvidersTable extends Migration
             $table->string('mobile')->nullable();
             $table->string('password');
             $table->string('avatar')->nullable();
+            $table->string('social_unique_id')->nullable();
+            $table->boolean('confirmation')->default(0);
+            $table->string('token')->nullable();
             $table->decimal('rating', 4, 2)->default(5);
             $table->enum('status', ['onboarding', 'approved', 'banned']);
             $table->double('latitude', 15, 8)->nullable();

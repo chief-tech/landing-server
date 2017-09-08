@@ -15,6 +15,10 @@
 Route::post('/register' , 'ProviderAuth\TokenController@register');
 Route::post('/oauth/token' , 'ProviderAuth\TokenController@authenticate');
 
+Route::get('/confirmation/{token}', 'ProviderAuth\TokenController@confirmation')->name('provider_confirmation');
+Route::post('/resendEmail', 'ProviderAuth\TokenController@resend_email');
+
+
 // Route::post('/oauth/token', 'AccessTokenController@issueToken');
 
 // Route::post('/oauth/token/refresh', [
