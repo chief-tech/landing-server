@@ -88,7 +88,7 @@ class UserApiController extends Controller
         $user->update(['confirmation' => 1,'token' => '',]);
         (new SendPushNotification)->UserEmailVerified($user);
 
-        return response()->json(['message' => 'Your email is verified'], 400);
+        return response()->json(['message' => 'Your email is verified'], 200);
 
       }
       else {
@@ -124,7 +124,7 @@ class UserApiController extends Controller
               $message->subject('VERIFY EMAIL ADDRESS');
         });
         (new SendPushNotification)->VerifyUserEmail($user);
-        return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 401);
+        return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 200);
 
       }
       else {
@@ -180,7 +180,7 @@ class UserApiController extends Controller
             });
             (new SendPushNotification)->VerifyUserEmail($user);
           //  return redirect(url('login'))->with('status','A confirmation email has been send to your email address. Kindly check your email to verify.');
-            return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 401);
+            return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 200);
 
           //  return $User;
         } catch (Exception $e) {

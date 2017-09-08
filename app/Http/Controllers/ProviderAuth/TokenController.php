@@ -82,7 +82,7 @@ class TokenController extends Controller
 
           //  return $Provider;
           (new SendPushNotification)->VerifyProviderEmail($provider);
-          return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 401);
+          return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 200);
         }
 
         } catch (QueryException $e) {
@@ -166,7 +166,7 @@ class TokenController extends Controller
         $provider->save();
         (new SendPushNotification)->ProviderEmailVerified($provider);
 
-        return response()->json(['message' => 'Your email is verified'], 400);
+        return response()->json(['message' => 'Your email is verified'], 200);
 
       }
       else {
@@ -204,7 +204,7 @@ class TokenController extends Controller
         });
         (new SendPushNotification)->VerifyProviderEmail($provider);
 
-        return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 401);
+        return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 200);
 
       }
       else {
