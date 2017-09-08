@@ -46,6 +46,7 @@ class TokenController extends Controller
             $Provider['password'] = bcrypt($request->password);
             }
             $Provider = Provider::create($Provider);
+            //return response()->json(['data' => $Provider]);
 
             ProviderDevice::create([
                     'provider_id' => $Provider->id,
@@ -53,11 +54,19 @@ class TokenController extends Controller
                     'token' => $request->device_token,
                     'type' => $request->device_type,
                 ]);
-
+                $data = $Provider->toArray();
+                $prov = Provider::find($data['id']);
                 if($request->social_unique_id != ""){
-                  $Provider->social_unique_id = $request->social_unique_id;
-                  $Provider->confirmation = 1;
+                  $prov->social_unique_id = $request->social_unique_id;
+                  $prov->confirmation = 1;
+                  $prov->save();
+                  $prov = Provider::find($data['id']);
+
+                //  $prov->update(['social_unique_id' => $request->social_unique_id, 'confirmation' => 1]);
+                  return response()->json(['data' => $prov]);
+
                 }
+                else{
                 $provider_data = $request->all();
                 $data = $Provider->toArray();
                 $data['token'] = str_random(25);
@@ -74,7 +83,7 @@ class TokenController extends Controller
           //  return $Provider;
           (new SendPushNotification)->VerifyProviderEmail($provider);
           return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 401);
-
+        }
 
         } catch (QueryException $e) {
             if ($request->ajax() || $request->wantsJson()) {
