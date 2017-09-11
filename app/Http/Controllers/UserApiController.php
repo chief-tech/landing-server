@@ -75,6 +75,9 @@ class UserApiController extends Controller
             return response()->json(['message' => 'Your email is not verified'], 401);
           }
         }
+        else{
+          return response()->json(['message' => 'User not found'], 401);
+        }
         else {
           return response()->json(['error' => 'Invalid Login Request'], 402);
         }
