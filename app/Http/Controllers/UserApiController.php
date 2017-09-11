@@ -78,10 +78,11 @@ class UserApiController extends Controller
         else{
           return response()->json(['message' => 'User not found'], 401);
         }
-        else {
+      }
+      else {
           return response()->json(['error' => 'Invalid Login Request'], 402);
         }
-      }
+
     }
 
     public function confirmation($token){
