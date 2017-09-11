@@ -66,9 +66,10 @@ class UserApiController extends Controller
           Auth::login($authUser, true);
           $user = Auth::user();
           $s = $user->createToken('MyApp');
-          $success['access_token'] =  $s->accessToken;
+          $token_type = 'Bearer';
+          $access_token =  $s->accessToken;
           if(Auth::user()->confirmation != 0)
-          return response()->json(['success' => $success], 200);
+          return response()->json(['token_type' => $token_type, 'access_token' => $access_token], 200);
           else {
             Auth::logout();
             return response()->json(['message' => 'Your email is not verified'], 401);
