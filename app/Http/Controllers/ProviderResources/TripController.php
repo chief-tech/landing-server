@@ -426,7 +426,10 @@ class TripController extends Controller
                 (new SendPushNotification)->ChargedWalletMoney($UserRequest->user_id,currency($Total));
 
             }
-
+            $Payment->service_fee = $service_fee;
+            $Payment->base_fare = $base_fare;
+            $Payment->per_mile = Setting::get('price_per_mile');
+            $Payment->per_minute = Setting::get('price_per_minute');
             $Payment->tax = $Tax;
             $Payment->save();
 
