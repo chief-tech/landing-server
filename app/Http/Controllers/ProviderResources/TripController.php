@@ -208,7 +208,25 @@ class TripController extends Controller
         try{
 
             $UserRequest = UserRequests::with('user')->findOrFail($id);
-
+            if($request->status == 'DROPPED')
+            {
+            // var_dump("sdbj");die();
+              //echo  $date->format('U = Y-m-d H:i:s');
+              // $date = date_create();
+              // echo date_format($date, 'U = Y-m-d H:i:s') . "\n"; die();
+              // $date = new DateTime();
+              // $time_stamp = $date->format('U = Y-m-d H:i:s');
+              $time_stamp = Carbon::now()->toDateTimeString();
+              $UserRequest->finished_at = $time_stamp;
+            }
+            if($request->status == 'PICKEDUP')
+            {
+              // $date = new DateTime();
+              // $time_stamp = $date->format('U = Y-m-d H:i:s');
+              // var_dump($time_stamp);die();
+              $time_stamp = Carbon::now()->toDateTimeString();
+              $UserRequest->started_at = $time_stamp;
+            }
             if($request->status == 'DROPPED' && $UserRequest->payment_mode != 'CASH') {
                 $UserRequest->status = 'COMPLETED';
             } else if ($request->status == 'COMPLETED' && $UserRequest->payment_mode == 'CASH') {
@@ -216,6 +234,8 @@ class TripController extends Controller
                 $UserRequest->paid = 1;
                 ProviderService::where('provider_id',$UserRequest->provider_id)->update(['status' =>'active']);
             } else {
+
+
                 $UserRequest->status = $request->status;
                 if($request->status == 'ARRIVED'){
                     (new SendPushNotification)->Arrived($UserRequest);
@@ -242,7 +262,7 @@ class TripController extends Controller
                 $details = json_decode($json, TRUE);
                 $meter = $details['rows'][0]['elements'][0]['distance']['value'];
                 $time = $details['rows'][0]['elements'][0]['duration']['text'];
-                $kilometer = round($meter/1000);
+                $kilometer = round($meter/1609.344497893);
                 $UserRequest->distance = $kilometer;
                 $UserRequest->save();
                 $UserRequest->invoice = $this->invoice($id);
@@ -339,9 +359,15 @@ class TripController extends Controller
             $Wallet = 0;
 
             $Commision = ( $Fixed + $Distance ) * (Setting::get('payment_commision', 10) / 100);
-
+            $start_time = $UserRequest->started_at;
+            $start_time = strtotime($start_time);
+            $finish_time = $UserRequest->finished_at;
+            $finish_time = strtotime($finish_time);
+            $interval  = abs($finish_time - $start_time);
+            $minutes   = round($interval / 60);
+            $minutes_charges = $minutes * (Setting::get('price_per_minute'));
             $Tax = $Fixed + $Distance + $Commision * (Setting::get('payment_tax', 10) / 100);
-            $Total = $Fixed + $Distance - $Discount + $Commision + $Tax;
+            $Total = $Fixed + $Distance + $minutes_charges - $Discount + $Commision + $Tax;
 
             if($Total < 0){
                 $Total = 0.00; // prevent from negative value
@@ -397,8 +423,9 @@ class TripController extends Controller
 
             $Payment->tax = $Tax;
             $Payment->save();
-
-            return $Payment;
+            $invoice_array = array(['payment' => $Payment, 'minutes' =>$minutes]);
+            dd($invoice_array); die();
+            return $invoice_array;
 
         } catch (ModelNotFoundException $e) {
             return false;
