@@ -346,7 +346,10 @@ class TripController extends Controller
             $UserRequest = UserRequests::findOrFail($request_id);
 
             $Fixed = $UserRequest->service_type->fixed ? : 0;
-            $Distance = ceil($UserRequest->distance) * $UserRequest->service_type->price;
+            //$Distance = ceil($UserRequest->distance) * $UserRequest->service_type->price;
+            $service_fee = Setting::get('service_fee');
+            $base_fare = Setting::get('base_fare');
+            $Distance = ceil($UserRequest->distance) * (Setting::get('price_per_mile'));
             $Discount = 0; // Promo Code discounts should be added here.
 
             if($PromocodeUsage = PromocodeUsage::where('user_id',$UserRequest->user_id)->where('status','ADDED')->first()){
@@ -357,20 +360,21 @@ class TripController extends Controller
                 }
             }
             $Wallet = 0;
-
-            $Commision = ( $Fixed + $Distance ) * (Setting::get('payment_commision', 10) / 100);
+            $Commision = 0;
+            //$Commision = ( $Fixed + $Distance ) * (Setting::get('payment_commision', 10) / 100);
             $start_time = $UserRequest->started_at;
             $start_time = strtotime($start_time);
             $finish_time = $UserRequest->finished_at;
             $finish_time = strtotime($finish_time);
             $interval  = abs($finish_time - $start_time);
-            $minutes   = round($interval / 60);
+            $minutes   = ceil($interval / 60);
             $UserRequest->time_taken = $minutes;
             $UserRequest->save();
             $minutes_charges = $minutes * (Setting::get('price_per_minute'));
-            $Tax = $Fixed + $Distance + $Commision * (Setting::get('payment_tax', 10) / 100);
-            $Total = $Fixed + $Distance + $minutes_charges - $Discount + $Commision + $Tax;
-
+            $Tax = 0;
+          //  $Tax = $Fixed + $Distance + $Commision * (Setting::get('payment_tax', 10) / 100);
+          //  $Total = $Fixed + $Distance + $minutes_charges - $Discount + $Commision + $Tax;
+            $Total = $service_fee + $base_fare + $Distance + $minutes_charges - $Discount;
             if($Total < 0){
                 $Total = 0.00; // prevent from negative value
             }

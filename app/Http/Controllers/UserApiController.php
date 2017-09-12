@@ -614,21 +614,26 @@ class UserApiController extends Controller
             $meter = $details['rows'][0]['elements'][0]['distance']['value'];
             $time = $details['rows'][0]['elements'][0]['duration']['text'];
             $miles = round($meter/1609.344497893);
-            $tax_percentage = \Setting::get('tax_percentage');
-            $commission_percentage = \Setting::get('commission_percentage');
-            $service_type = ServiceType::findOrFail($request->service_type);
-            $base_price = $service_type->fixed;
-            $price_per_mile = $service_type->price;
-            $price = $base_price + ($miles * $price_per_mile);
-            $price += ( $commission_percentage/100 ) * $price;
-            $tax_price = ( $tax_percentage/100 ) * $price;
-            $total = $price + $tax_price;
+            // $tax_percentage = \Setting::get('tax_percentage');
+            // $commission_percentage = \Setting::get('commission_percentage');
+            // $service_type = ServiceType::findOrFail($request->service_type);
+            // $base_price = $service_type->fixed;
+            // $price_per_mile = $service_type->price;
+            // $price = $base_price + ($miles * $price_per_mile);
+            // $price += ( $commission_percentage/100 ) * $price;
+            // $tax_price = ( $tax_percentage/100 ) * $price;
+            $tax_price = 0;
+            $service_fee = Setting::get('service_fee');
+            $base_fare = Setting::get('base_fare');
+            $Distance = $miles * Setting::get('price_per_mile');
+            $time_charges = $time * Setting::get('price_per_minute');
+            $total = $service_fee + $base_fare + $Distance + $time_charges;
             return response()->json([
                     'estimated_fare' => round($total,2),
                     'distance' => $miles,
                     'time' => $time,
                     'tax_price' => $tax_price,
-                    'base_price' => $base_price,
+                    'base_price' => $base_fare,
                     'wallet_balance' => Auth::user()->wallet_balance
                 ]);
         }
