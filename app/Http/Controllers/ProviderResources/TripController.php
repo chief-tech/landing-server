@@ -365,6 +365,8 @@ class TripController extends Controller
             $finish_time = strtotime($finish_time);
             $interval  = abs($finish_time - $start_time);
             $minutes   = round($interval / 60);
+            $UserRequest->time_taken = $minutes;
+            $UserRequest->save();
             $minutes_charges = $minutes * (Setting::get('price_per_minute'));
             $Tax = $Fixed + $Distance + $Commision * (Setting::get('payment_tax', 10) / 100);
             $Total = $Fixed + $Distance + $minutes_charges - $Discount + $Commision + $Tax;
@@ -423,9 +425,8 @@ class TripController extends Controller
 
             $Payment->tax = $Tax;
             $Payment->save();
-            $invoice_array = array(['payment' => $Payment, 'minutes' =>$minutes]);
-            dd($invoice_array); die();
-            return $invoice_array;
+
+            return $Payment;
 
         } catch (ModelNotFoundException $e) {
             return false;
