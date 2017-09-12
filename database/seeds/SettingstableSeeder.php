@@ -44,28 +44,28 @@ class SettingsTableSeeder extends Seeder
             ],
             [
                 'key' => 'price_per_minute',
-                'value' => 50
+                'value' => 0.25
             ],
             [
                 'key' => 'tax_percentage',
                 'value' => 0
-            ],  
+            ],
             [
                 'key' => 'stripe_secret_key',
                 'value' => ''
-            ], 
+            ],
              [
                 'key' => 'stripe_publishable_key',
                 'value' => ''
-            ], 
+            ],
             [
                 'key' => 'CASH',
                 'value' => 1
-            ], 
+            ],
             [
                 'key' => 'PAYPAL',
                 'value' => 1
-            ], 
+            ],
             [
                 'key' => 'CARD',
                 'value' => 1
@@ -73,19 +73,19 @@ class SettingsTableSeeder extends Seeder
             [
                 'key' => 'manual_request',
                 'value' => 0
-            ],  
+            ],
             [
                 'key' => 'paypal_email',
                 'value' => ''
-            ], 
+            ],
             [
                 'key' => 'default_lang',
                 'value' => 'en'
-            ], 
+            ],
             [
                 'key' => 'currency',
                 'value' => '$'
-            ], 
+            ],
             [
                 'key' => 'scheduled_cancel_time_exceed',
                 'value' => '10'
@@ -110,6 +110,19 @@ class SettingsTableSeeder extends Seeder
                 'key' => 'app_store_link',
                 'value' => ''
             ],
+            [
+                'key' => 'price_per_mile',
+                'value' => '1.25'
+            ],
+            [
+                'key' => 'base_fare',
+                'value' => '1.25'
+            ],
+            [
+                'key' => 'service_fee',
+                'value' => '1'
+            ],
+
         ]);
     }
 }

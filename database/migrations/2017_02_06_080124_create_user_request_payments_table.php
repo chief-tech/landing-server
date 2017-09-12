@@ -17,7 +17,7 @@ class CreateUserRequestPaymentsTable extends Migration
             $table->increments('id');
             $table->integer('request_id');
             $table->integer('promocode_id')->nullable();
-            
+
             $table->string('payment_id')->nullable();
             $table->string('payment_mode')->nullable();
 
@@ -28,6 +28,10 @@ class CreateUserRequestPaymentsTable extends Migration
             $table->float('tax',        10, 2)->default(0);
             $table->float('wallet',     10, 2)->default(0);
             $table->float('total',      10, 2)->default(0);
+            $table->float('service_fee',  10,2)->default(0);
+            $table->float('base_fare',  10,2)->default(0);
+            $table->float('price_per_mile',  10,2)->default(0);
+            $table->float('price_per_minute',  10,2)->default(0);
 
             $table->timestamps();
         });
