@@ -88,7 +88,7 @@ class UserApiController extends Controller
     public function confirmation($token){
       try{
       $user = User::where('token', '=', $token)->first();
-
+      
       if(!is_null($user)){
         $user->update(['confirmation' => 1,'token' => '',]);
         (new SendPushNotification)->UserEmailVerified($user);

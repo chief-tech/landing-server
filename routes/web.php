@@ -67,6 +67,10 @@ Route::get('/drive', function () {
     return view('drive');
 });
 
+Route::get('/user_confirmation/{token}', 'UserApiController@confirmation')->name('user_confirmation');
+Route::get('/confirmation/{token}', 'ProviderAuth\TokenController@confirmation')->name('provider_confirmation');
+
+
 /*
 |--------------------------------------------------------------------------
 | User Routes

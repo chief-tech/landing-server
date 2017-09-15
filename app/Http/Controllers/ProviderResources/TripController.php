@@ -56,6 +56,7 @@ class TripController extends Controller
                     'account_status' => Auth::user()->status,
                     'service_status' => Auth::user()->service ? Auth::user()->service->status : 'offline',
                     'requests' => $IncomingRequests,
+                    'stripe_account_status' => Auth::user()->stripe_account_status,
                 ];
 
             return $Response;

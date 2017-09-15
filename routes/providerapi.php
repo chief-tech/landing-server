@@ -15,7 +15,7 @@
 Route::post('/register' , 'ProviderAuth\TokenController@register');
 Route::post('/oauth/token' , 'ProviderAuth\TokenController@authenticate');
 
-Route::get('/confirmation/{token}', 'ProviderAuth\TokenController@confirmation')->name('provider_confirmation');
+// Route::get('/confirmation/{token}', 'ProviderAuth\TokenController@confirmation')->name('provider_confirmation');
 Route::post('/resendEmail', 'ProviderAuth\TokenController@resend_email');
 
 
@@ -60,5 +60,8 @@ Route::group(['middleware' => ['provider.api']], function () {
         Route::post('/show', 'ProviderApiController@request_details');
 
     });
+    Route::post('/stripe', 'ProviderResources\PaymentController@create_account');
+    Route::post('/stripe-verify', 'ProviderResources\PaymentController@verify_account');
+    Route::post('/stripe-payout', 'ProviderResources\PaymentController@payout');
 
 });
