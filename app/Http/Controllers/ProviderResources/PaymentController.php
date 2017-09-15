@@ -8,6 +8,7 @@ use App\Card;
 use App\User;
 use App\Provider;
 use App\ProviderAccount;
+use App\ProviderService;
 use App\Http\Controllers\SendPushNotification;
 use App\Http\Controllers\Controller;
 use Carbon\Carbon;
@@ -117,11 +118,16 @@ class PaymentController extends Controller
 
       $ProviderAccount->status = $acct_updated->legal_entity->verification->status;
       $ProviderAccount->save();
-      $provider = Provider::findOrFail($provider_id);
-      $provider->stripe_account_status = 'CREATED';
-      $provider->save();
-      if($acct_updated->external_accounts->total_count > 0)
+
+      if($acct_updated->external_accounts->total_count > 0){
+        $provider = Provider::findOrFail($provider_id);
+        $provider->stripe_account_status = 'CREATED';
+        $provider->status = 'approved';
+        $provider->save();
+        $this->update_provider_services($provider_id);
         return response()->json(['message' => 'Your account is created succesfully'], 200);
+
+      }
       else
         return response()->json(['message' => 'Your payouts are not enabled'], 400);
 
@@ -204,6 +210,24 @@ class PaymentController extends Controller
        }
  }
   }
+
+  public function update_provider_services($provider_id){
+    try{
+    $provider = Provider::find($provider_id);
+    $provider_service = new ProviderService;
+    $provider_service->provider_id = $provider_id;
+    $provider_service->service_type_id = 1;
+    $provider_service->status = 'active';
+    $provider_service->save();
+    return true;
+  }
+  catch (QueryException $e) {
+      if ($request->ajax() || $request->wantsJson()) {
+          return response()->json(['error' => 'Something went wrong, Please try again later!'], 500);
+      }
+      return abort(500);
+  }
+}
   // public function transfer_to_provider(Request $request){
   //   try{
   //       \Stripe\Stripe::setApiKey(Setting::get('stripe_secret_key'));
