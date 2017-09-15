@@ -16,6 +16,7 @@ use Mail;
 
 use App\Provider;
 use App\ProviderDevice;
+use App\ProviderService;
 
 class TokenController extends Controller
 {
@@ -56,6 +57,11 @@ class TokenController extends Controller
                 ]);
                 $data = $Provider->toArray();
                 $prov = Provider::find($data['id']);
+                $prov->status = 'approved';
+                $prov->save();
+              //  return response()->json(['data' => $prov]);
+
+                $this->update_provider_services($prov->id);
                 if($request->social_unique_id != ""){
                   $prov->social_unique_id = $request->social_unique_id;
                   $prov->confirmation = 1;
@@ -80,10 +86,12 @@ class TokenController extends Controller
                       $message->subject('VERIFY EMAIL ADDRESS');
                 });
 
+
           //  return $Provider;
           (new SendPushNotification)->VerifyProviderEmail($provider);
           return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 200);
         }
+
 
         } catch (QueryException $e) {
             if ($request->ajax() || $request->wantsJson()) {
@@ -99,7 +107,24 @@ class TokenController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
+     public function update_provider_services($provider_id){
+       try{
+       $provider = Provider::find($provider_id);
+       $provider_service = new ProviderService;
+       $provider_service->provider_id = $provider_id;
+       $provider_service->service_type_id = 1;
+       $provider_service->status = 'active';
+       $provider_service->save();
+       return true;
+     }
+     catch (QueryException $e) {
+         if ($request->ajax() || $request->wantsJson()) {
+             return response()->json(['error' => 'Something went wrong, Please try again later!'], 500);
+         }
+         return abort(500);
+     }
 
+     }
     public function authenticate(Request $request)
     {
         $this->validate($request, [

@@ -14,7 +14,7 @@ Route::post('/signup' , 'UserApiController@signup');
 //login request
 Route::post('oauth/token', 'UserApiController@login_access');
 //email confirmation
-Route::get('/confirmation/{token}', 'UserApiController@confirmation')->name('confirmation');
+// Route::get('/confirmation/{token}', 'UserApiController@confirmation')->name('user_confirmation');
 //resend email
 Route::post('/resendEmail', 'UserApiController@resend_email');
 

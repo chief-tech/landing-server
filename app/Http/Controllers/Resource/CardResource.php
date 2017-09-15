@@ -66,7 +66,9 @@ class CardResource extends Controller
             $create_card->last_four = $card['last4'];
             $create_card->brand = $card['brand'];
             $create_card->save();
-
+            $user = User::findOrFail(Auth::user()->id);
+            $user->payment_mode = 'CARD';
+            $user->save();
             if($request->ajax()){
                 return response()->json(['message' => 'Card Added']);
             }else{
