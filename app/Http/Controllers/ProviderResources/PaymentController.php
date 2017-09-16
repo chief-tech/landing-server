@@ -68,7 +68,7 @@ class PaymentController extends Controller
       // $provider_account->created_at = Carbon::now();
       $provider_account->save();
 //      return response()->json(['account' => $provider_account]);
-      try{
+    try{
       $provider_id = Auth::user()->id;
     //  return response()->json(['account' => $provider_id]);
       $ProviderAccount = ProviderAccount::where('provider_id', '=', $provider_id)->firstOrFail();
@@ -134,9 +134,9 @@ class PaymentController extends Controller
       catch (ModelNotFoundException $e) {
           return response()->json(['error' => 'Unable to accept, Please try again later'],400);
       }
-      // catch (Exception $e) {
-      //     return response()->json(['error' => 'Connection Error'],400);
-      // }
+       catch (Exception $e) {
+           return response()->json(['error' => 'Connection Error'],400);
+       }
 
 
 
