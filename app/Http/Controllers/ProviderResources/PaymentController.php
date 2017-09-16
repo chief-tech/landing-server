@@ -135,7 +135,7 @@ class PaymentController extends Controller
           return response()->json(['error' => 'Unable to accept, Please try again later'],400);
       }
        catch (Exception $e) {
-           return response()->json(['error' => 'Connection Error'],400);
+           return response()->json(['error' => $e->getMessage()],400);
        }
 
 
