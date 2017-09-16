@@ -122,7 +122,6 @@ class PaymentController extends Controller
       if($acct_updated->external_accounts->total_count > 0){
         $provider = Provider::findOrFail($provider_id);
         $provider->stripe_account_status = 'CREATED';
-        $provider->status = 'approved';
         $provider->save();
         $this->update_provider_services($provider_id);
         return response()->json(['message' => 'Your account is created succesfully'], 200);
@@ -225,7 +224,7 @@ class PaymentController extends Controller
       if ($request->ajax() || $request->wantsJson()) {
           return response()->json(['error' => 'Something went wrong, Please try again later!'], 500);
       }
-      return abort(500);
+      return response()->json(['error' => 'Service not created'], 500);
   }
 }
   // public function transfer_to_provider(Request $request){
