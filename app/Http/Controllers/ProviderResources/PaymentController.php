@@ -45,33 +45,33 @@ class PaymentController extends Controller
       //return response()->json(['account' => $acct_details]);
 
       $dob = explode('-', $request->DOB);
-      $provider_account = new ProviderAccount;
-      $provider_account->provider_id = Auth::user()->id;
-      $provider_account->stripe_acct_id = $acct_details->id;
-      $provider_account->stripe_sk_key = $acct_details->keys->secret;
-      $provider_account->stripe_pk_key = $acct_details->keys->publishable;
-      $provider_account->tos_acceptance_date = Carbon::now();
-      $provider_account->tos_acceptance_ip = $_SERVER['REMOTE_ADDR'];
-      $provider_account->DOB = $request->DOB;
-      $provider_account->state =$request->state;
-      $provider_account->city = $request->city;
-      $provider_account->country = $request->country;
-      $provider_account->address = $request->address;
-      $provider_account->ssn_last_4 = $request->ssn_last_4;
-      $provider_account->postal_code = $request->postal_code;
-      $provider_account->personal_id_no = $request->personal_id_no;
-      //bank account details for stripe external acccount
-      $provider_account->bank_account_holder_name = $request->account_holder_name;
-      $provider_account->bank_account_holder_type = $request->account_holder_type;
-      $provider_account->bank_routing_number = $request->routing_number;
-      $provider_account->bank_account_number = $request->account_number;
-      // $provider_account->created_at = Carbon::now();
-      $provider_account->save();
+      // $provider_account = new ProviderAccount;
+      // $provider_account->provider_id = Auth::user()->id;
+      // $provider_account->stripe_acct_id = $acct_details->id;
+      // $provider_account->stripe_sk_key = $acct_details->keys->secret;
+      // $provider_account->stripe_pk_key = $acct_details->keys->publishable;
+      // $provider_account->tos_acceptance_date = Carbon::now();
+      // $provider_account->tos_acceptance_ip = $_SERVER['REMOTE_ADDR'];
+      // $provider_account->DOB = $request->DOB;
+      // $provider_account->state =$request->state;
+      // $provider_account->city = $request->city;
+      // $provider_account->country = $request->country;
+      // $provider_account->address = $request->address;
+      // $provider_account->ssn_last_4 = $request->ssn_last_4;
+      // $provider_account->postal_code = $request->postal_code;
+      // $provider_account->personal_id_no = $request->personal_id_no;
+      // //bank account details for stripe external acccount
+      // $provider_account->bank_account_holder_name = $request->account_holder_name;
+      // $provider_account->bank_account_holder_type = $request->account_holder_type;
+      // $provider_account->bank_routing_number = $request->routing_number;
+      // $provider_account->bank_account_number = $request->account_number;
+      // // $provider_account->created_at = Carbon::now();
+      // $provider_account->save();
 //      return response()->json(['account' => $provider_account]);
     try{
       $provider_id = Auth::user()->id;
     //  return response()->json(['account' => $provider_id]);
-      $ProviderAccount = ProviderAccount::where('provider_id', '=', $provider_id)->firstOrFail();
+    //  $ProviderAccount = ProviderAccount::where('provider_id', '=', $provider_id)->firstOrFail();
     //  return response()->json(['account' => $ProviderAccount->tos_acceptance_date]);
       //echo $ProviderAccount->stripe_acct_id;
       //die();
@@ -80,26 +80,26 @@ class PaymentController extends Controller
       //                                  'month' => $dob[1],
       //                                  'year' => $dob[2]]);
 
-      $acct = \Stripe\Account::retrieve($ProviderAccount->stripe_acct_id);
+      $acct = \Stripe\Account::retrieve($acct_details->id);
       //$acct->tos_acceptance->date = Carbon::now()->toDateTimeString();
       $acct->tos_acceptance->date = time();
-      $acct->tos_acceptance->ip = $ProviderAccount->tos_acceptance_ip;
+      $acct->tos_acceptance->ip = $_SERVER['REMOTE_ADDR'];
       $acct->legal_entity->first_name = Auth::user()->first_name;
       $acct->legal_entity->last_name = Auth::user()->last_name;
       $acct->legal_entity->dob = array('day' => $dob[0],
                                        'month' => $dob[1],
                                        'year' => $dob[2]);
-      $acct->legal_entity->type = $ProviderAccount->type;
-      $acct->legal_entity->address->state = $ProviderAccount->state;
-      $acct->legal_entity->address->city = $ProviderAccount->city;
-      $acct->legal_entity->address->line1 = $ProviderAccount->address;
-      $acct->legal_entity->address->postal_code = $ProviderAccount->postal_code;
-      $acct->legal_entity->ssn_last_4 = $ProviderAccount->ssn_last_4;
-      $acct->legal_entity->personal_id_number = $ProviderAccount->personal_id_no;
+      $acct->legal_entity->type = $request->account_holder_type;
+      $acct->legal_entity->address->state = $request->state;
+      $acct->legal_entity->address->city = $request->city;
+      $acct->legal_entity->address->line1 = $request->address;
+      $acct->legal_entity->address->postal_code = $request->postal_code;
+      $acct->legal_entity->ssn_last_4 = $request->ssn_last_4;
+      $acct->legal_entity->personal_id_number = $request->personal_id_no;
 //489-36-8350
       $bank_token = \Stripe\Token::create(array(
             "bank_account" => array(
-              "country" => $ProviderAccount->country,
+              "country" => $request->country,
               "currency" => "usd",
               "account_holder_name" => $request->account_holder_name,
               "account_holder_type" => $request->account_holder_type,
@@ -111,15 +111,39 @@ class PaymentController extends Controller
         "external_account" => $bank_token->id,
       ));
       $acct->save();
-      $acct_updated = \Stripe\Account::retrieve($ProviderAccount->stripe_acct_id);
+      $acct_updated = \Stripe\Account::retrieve($acct->id);
 
 
     //  return response()->json(['message' => $tok], 200);
 
-      $ProviderAccount->status = $acct_updated->legal_entity->verification->status;
-      $ProviderAccount->save();
+    //  $ProviderAccount->status = $acct_updated->legal_entity->verification->status;
+      //$ProviderAccount->save();
 
       if($acct_updated->external_accounts->total_count > 0){
+        $provider_account = new ProviderAccount;
+        $provider_account->provider_id = Auth::user()->id;
+        $provider_account->stripe_acct_id = $acct_updated->id;
+        $provider_account->stripe_sk_key = $acct_details->keys->secret;
+        $provider_account->stripe_pk_key = $acct_details->keys->publishable;
+        $provider_account->tos_acceptance_date = Carbon::now();
+        $provider_account->tos_acceptance_ip = $_SERVER['REMOTE_ADDR'];
+        $provider_account->DOB = $request->DOB;
+        $provider_account->state =$request->state;
+        $provider_account->city = $request->city;
+        $provider_account->country = $request->country;
+        $provider_account->address = $request->address;
+        $provider_account->ssn_last_4 = $request->ssn_last_4;
+        $provider_account->postal_code = $request->postal_code;
+        $provider_account->personal_id_no = $request->personal_id_no;
+        //bank account details for stripe external acccount
+        $provider_account->bank_account_holder_name = $request->account_holder_name;
+        $provider_account->bank_account_holder_type = $request->account_holder_type;
+        $provider_account->bank_routing_number = $request->routing_number;
+        $provider_account->bank_account_number = $request->account_number;
+        $provider_account->status = $acct_updated->legal_entity->verification->status;
+
+        // $provider_account->created_at = Carbon::now();
+        $provider_account->save();
         $provider = Provider::findOrFail($provider_id);
         $provider->stripe_account_status = 'CREATED';
         $provider->save();
@@ -128,13 +152,15 @@ class PaymentController extends Controller
 
       }
       else
-        return response()->json(['message' => 'Your payouts are not enabled'], 400);
+        return response()->json(['message' => 'Account not created'], 400);
 
       }
       catch (ModelNotFoundException $e) {
           return response()->json(['error' => 'Unable to accept, Please try again later'],400);
       }
        catch (Exception $e) {
+         $acct_updated = \Stripe\Account::retrieve($acct_details->id);
+          $del_acc = $this->delete_account($acct_updated);
            return response()->json(['error' => $e->getMessage()],400);
        }
 
@@ -150,7 +176,14 @@ class PaymentController extends Controller
         }
   }
 }
-
+  public function delete_account($acct){
+    // $key = Setting::get('stripe_secret_key');
+    // \Stripe\Stripe::setApiKey($key);
+    \Stripe\Stripe::setApiKey(Setting::get('stripe_secret_key'));
+    $account = \Stripe\Account::retrieve($acct->id);
+    $account->delete();
+    return $account;
+  }
   public function payout(Request $request){
     $provider_id = Auth::user()->id;
     $ProviderAccount = ProviderAccount::where('provider_id', '=', $provider_id)->firstOrFail();
