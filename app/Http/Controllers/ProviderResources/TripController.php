@@ -123,7 +123,6 @@ class TripController extends Controller
             $average = UserRequestRating::where('provider_id', $UserRequest->provider_id)->avg('provider_rating');
 
             $UserRequest->user->update(['rating' => $average]);
-            
             ProviderService::where('provider_id',$UserRequest->provider_id)->update(['status' =>'active']);
             return response()->json(['message' => 'Request Completed!']);
 
