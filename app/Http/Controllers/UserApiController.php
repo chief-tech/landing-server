@@ -32,6 +32,7 @@ class UserApiController extends Controller
      */
 
     public function login_access(Request $request){
+      Log::useDailyFiles(storage_path().'/logs/login_access.log');
       $this->validate($request, [
               'grant_type' => 'required',
               'client_secret' => 'required',
@@ -40,6 +41,8 @@ class UserApiController extends Controller
               'password' => 'nullable',
               'social_unique_id' => 'nullable',
           ]);
+      Log::info("Request data: ");
+      Log::info($request->all());
       $email = $request->email;
       if($request->email != "" && $request->password != ""){
       if(Auth::attempt(['email' => $email, 'password' => $request->password])){
@@ -49,37 +52,47 @@ class UserApiController extends Controller
             $access_token =  $s->accessToken;
 
             // $success['refresh_token'] =  $s->refreshToken;
-            if(Auth::user()->confirmation != 0)
+            if(Auth::user()->confirmation != 0){
+              Log::info("Token assigned to user, returned with status 200");
             return response()->json(['token_type' => $token_type, 'access_token' => $access_token], 200);
+          }
             else {
               Auth::logout();
+              Log::info("Token not assigned to user, Email not verified, returned with status 401");
               return response()->json(['error' => 'Your email is not verified'], 401);
             }
         }
         else{
+          Log::info("The email address or password you entered is incorrect. returned with status 400");
           return response()->json(['error' => 'The email address or password you entered is incorrect.'], 400);
         }
       }
       else if($request->social_unique_id != ""){
         $authUser = User::where('social_unique_id', $request->social_unique_id)->first();
         if ($authUser) {
+          Log::info("The email address or password you entered is incorrect. returned with status 400");
           Auth::login($authUser, true);
           $user = Auth::user();
           $s = $user->createToken('MyApp');
           $token_type = 'Bearer';
           $access_token =  $s->accessToken;
-          if(Auth::user()->confirmation != 0)
+          if(Auth::user()->confirmation != 0){
+            Log::info("Socail Login, token assigned. returned with status 200");
           return response()->json(['token_type' => $token_type, 'access_token' => $access_token], 200);
+          }
           else {
             Auth::logout();
+            Log::info("Social Login, token assigned. returned with status 200");
             return response()->json(['message' => 'Your email is not verified'], 401);
           }
         }
         else{
+          Log::info("Social Login attemp, User not found, returned with status 401");
           return response()->json(['message' => 'User not found'], 401);
         }
       }
       else {
+        Log::info("Login attemp, Invalid request, returned with status 401");
           return response()->json(['error' => 'Invalid Login Request'], 402);
         }
 
@@ -87,36 +100,43 @@ class UserApiController extends Controller
 
     public function confirmation($token){
       try{
+      Log::info("email confirmation ");
       $user = User::where('token', '=', $token)->first();
-      
+
       if(!is_null($user)){
         $user->update(['confirmation' => 1,'token' => '',]);
         (new SendPushNotification)->UserEmailVerified($user);
-
+        Log::info("Email verified for user ".$user->id." status returned 200 ");
         return response()->json(['message' => 'Your email is verified'], 200);
 
       }
       else {
+        Log::info("Email verification link is expired for user ".$user->id." status returned 403 ");
         return response()->json(['error' => 'This Link is expired'], 403);
 
       }
     }
     catch(Exception $e){
+      Log::info("Exception thrown in Email verification request: ". $e->getMessage()." status returned 500 ");
       return response()->json(['error' => trans('api.something_went_wrong')], 500);
 
     }
 
     }
     public function resend_email(Request $request){
+      Log::info("Resend verification email request ");
       $this->validate($request, [
               'email' => 'required',
           ]);
+      Log::info("Request data: ");
+      Log::info($request->all());
       try{
       $user = User::where('email', '=', $request->email)->first();
 
       if(!is_null($user)){
         $data = $user->toArray();
         if($user->token == ""){
+          Log::info("Email is already verified, status returned 400");
           return response()->json(['message' => 'Your email is already verified'], 400);
 
         }
@@ -133,11 +153,13 @@ class UserApiController extends Controller
 
       }
       else {
+        Log::info("Email not found: ".$request->email." status returned 402");
         return response()->json(['error' => 'Email not found'], 402);
 
       }
     }
     catch(Exception $e){
+      Log::info("Exception thrown in resend email request: ".$e->getMessage()." status returned 500" );
       return response()->json(['error' => trans('api.something_went_wrong')], 500);
 
     }
@@ -158,6 +180,9 @@ class UserApiController extends Controller
                 'social_unique_id' => 'nullable|unique:users',
             ]);
         try{
+            Log::info("Sign up request ");
+            Log::info("Request data: ");
+            Log::info($request->all());
             $User = $request->all();
             $User['payment_mode'] = 'CASH';
             if($request->password != ""){
@@ -185,10 +210,12 @@ class UserApiController extends Controller
             });
             (new SendPushNotification)->VerifyUserEmail($user);
           //  return redirect(url('login'))->with('status','A confirmation email has been send to your email address. Kindly check your email to verify.');
+           Log::info("Email send to user, status returned 200");
             return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 200);
 
           //  return $User;
         } catch (Exception $e) {
+          Log::info("Exception thrown in signup request: ".$e->getMessage()." status returned 500" );
              return response()->json(['error' => trans('api.something_went_wrong')], 500);
         }
     }
