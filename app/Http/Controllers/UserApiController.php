@@ -32,7 +32,7 @@ class UserApiController extends Controller
      */
 
     public function login_access(Request $request){
-      Log::useDailyFiles(storage_path().'/logs/login_access.log');
+      Log::useDailyFiles(storage_path().'/logs/user.log');
       $this->validate($request, [
               'grant_type' => 'required',
               'client_secret' => 'required',
@@ -41,8 +41,8 @@ class UserApiController extends Controller
               'password' => 'nullable',
               'social_unique_id' => 'nullable',
           ]);
-      Log::info("Request data: ");
-      Log::info($request->all());
+      Log::info("Login Request: ");
+      //Log::info($request->all());
       $email = $request->email;
       if($request->email != "" && $request->password != ""){
       if(Auth::attempt(['email' => $email, 'password' => $request->password])){
@@ -100,6 +100,7 @@ class UserApiController extends Controller
 
     public function confirmation($token){
       try{
+      Log::useDailyFiles(storage_path().'/logs/user.log');
       Log::info("email confirmation ");
       $user = User::where('token', '=', $token)->first();
 
@@ -124,6 +125,7 @@ class UserApiController extends Controller
 
     }
     public function resend_email(Request $request){
+      Log::useDailyFiles(storage_path().'/logs/resend.log');
       Log::info("Resend verification email request ");
       $this->validate($request, [
               'email' => 'required',
@@ -180,9 +182,10 @@ class UserApiController extends Controller
                 'social_unique_id' => 'nullable|unique:users',
             ]);
         try{
-            Log::info("Sign up request ");
-            Log::info("Request data: ");
-            Log::info($request->all());
+          Log::useDailyFiles(storage_path().'/logs/signup.log');
+        //    Log::info("Sign up request ");
+        //    Log::info("Request data: ");
+        //    Log::info($request->all());
             $User = $request->all();
             $User['payment_mode'] = 'CASH';
             if($request->password != ""){
@@ -211,7 +214,7 @@ class UserApiController extends Controller
             (new SendPushNotification)->VerifyUserEmail($user);
           //  return redirect(url('login'))->with('status','A confirmation email has been send to your email address. Kindly check your email to verify.');
            Log::info("Email send to user, status returned 200");
-            return response()->json(['Verification Required' => 'An Email is send to your email address. Kindly verify email'], 200);
+            return response()->json(['Verification_Required' => 'An Email is send to your email address. Kindly verify email'], 200);
 
           //  return $User;
         } catch (Exception $e) {
@@ -230,16 +233,21 @@ class UserApiController extends Controller
                 'old_password' => 'required',
             ]);
         $User = Auth::user();
+        Log::useDailyFiles(storage_path().'/logs/change_password.log');
+      //  Log::info("Password change request");
         if(Hash::check($request->old_password, $User->password))
         {
             $User->password = bcrypt($request->password);
             $User->save();
             if($request->ajax()) {
+                Log::info("Password updated");
                 return response()->json(['message' => trans('api.user.password_updated')]);
             }else{
+                Log::info("password uodated successfully");
                 return back()->with('flash_success', 'Password Updated');
             }
         } else {
+            Log::info("Incorrect password, return with status 500");
             return response()->json(['error' => trans('api.user.incorrect_password')], 500);
         }
     }
@@ -253,12 +261,16 @@ class UserApiController extends Controller
                 'latitude' => 'required|numeric',
                 'longitude' => 'required|numeric',
             ]);
+        Log::useDailyFiles(storage_path().'/logs/loc_update.log');
+        //Log::info("Location update request");
         if($user = User::find(Auth::user()->id)){
             $user->latitude = $request->latitude;
             $user->longitude = $request->longitude;
             $user->save();
-            return response()->json(['message' => trans('api.user.location_updated')]);
+            Log::info("Location updated return with status 200");
+            return response()->json(['message' => trans('api.user.location_updated')],200);
         }else{
+            Log::info("User not found, return with status 500");
             return response()->json(['error' => trans('api.user.user_not_found')], 500);
         }
     }
@@ -271,6 +283,7 @@ class UserApiController extends Controller
         $this->validate($request, [
             'device_type' => 'in:android,ios',
         ]);
+        Log::info("Details request");
         try{
             if($user = User::find(Auth::user()->id)){
                 if($request->has('device_token')){
@@ -284,8 +297,10 @@ class UserApiController extends Controller
                 }
                 $user->save();
                 $user->currency = currency();
+                Log::info("User return, status with 200");
                 return $user;
             }else{
+                Log::info("User not found, return with status 500");
                 return response()->json(['error' => trans('api.user.user_not_found')], 500);
             }
         }
@@ -307,6 +322,9 @@ class UserApiController extends Controller
                 'mobile' => 'required|digits_between:6,13',
                 'picture' => 'mimes:jpeg,bmp,png',
             ]);
+            Log::useDailyFiles(storage_path().'/logs/prof_update.log');
+
+         //Log::info("Update profile request");
          try {
             $user = User::findOrFail(Auth::user()->id);
             if($request->has('first_name')){
@@ -325,12 +343,15 @@ class UserApiController extends Controller
             }
             $user->save();
             if($request->ajax()) {
+                Log::info("Updated, user returned");
                 return response()->json($user);
             }else{
+                Log::info("profile updated");
                 return back()->with('flash_success', trans('api.user.profile_updated'));
             }
         }
         catch (ModelNotFoundException $e) {
+             Log::info("Model not found exception ".$e->getMessage()."return with status 500");
              return response()->json(['error' => trans('api.user.user_not_found')], 500);
         }
     }
@@ -340,9 +361,13 @@ class UserApiController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function services() {
+      Log::useDailyFiles(storage_path().'/logs/services.log');
+
         if($serviceList = ServiceType::all()) {
+            Log::info("return services");
             return $serviceList;
         } else {
+            Log::info("no found 500");
             return response()->json(['error' => trans('api.services_not_found')], 500);
         }
     }
@@ -364,13 +389,16 @@ class UserApiController extends Controller
                'payment_mode' => 'required|in:CASH,CARD,PAYPAL',
                'card_id' => ['required_if:payment_mode,CARD','exists:cards,card_id,user_id,'.Auth::user()->id],
             ]);
-        Log::info('New Request from user id :'. Auth::user()->id .' params are :');
-        Log::info($request->all());
+            Log::useDailyFiles(storage_path().'/logs/send_request.log');
+      //  Log::info('New Request from user id :'. Auth::user()->id);
         $ActiveRequests = UserRequests::PendingRequest(Auth::user()->id)->count();
         if($ActiveRequests > 0) {
             if($request->ajax()) {
+                Log::info("Request already in progress, return with status 500");
                 return response()->json(['error' => trans('api.ride.request_inprogress')], 500);
             }else{
+              Log::info("Already request is in progress, return with status 500");
+
                 return redirect('dashboard')->with('flash_error', 'Already request is in progress. Try again later');
             }
         }
@@ -394,8 +422,10 @@ class UserApiController extends Controller
         if(count($Providers) == 0) {
             if($request->ajax()) {
                 // Push Notification to User
+                Log::info("Providers not found");
                 return response()->json(['message' => trans('api.ride.no_providers_found')]);
             }else{
+                Log::info("No Providers Found! Please try again");
                 return back()->with('flash_success', 'No Providers Found! Please try again.');
             }
         }
@@ -423,7 +453,7 @@ class UserApiController extends Controller
             $UserRequest->use_wallet = $request->use_wallet ? : 0;
             $UserRequest->assigned_at = Carbon::now();
             $UserRequest->save();
-            Log::info('New Request id : '. $UserRequest->id .' Assigned to provider : '. $UserRequest->current_provider_id);
+            //Log::info('New Request id : '. $UserRequest->id .' Assigned to provider : '. $UserRequest->current_provider_id);
             // incoming request push to provider
             (new SendPushNotification)->IncomingRequest($UserRequest->current_provider_id);
             // update payment mode
@@ -442,12 +472,14 @@ class UserApiController extends Controller
                 $Filter->save();
             }
             if($request->ajax()) {
+                Log::info("New request created with id ".$UserRequest->id." with current provider id is ".$UserRequest->current_provider_id);
                 return response()->json([
                         'message' => 'New request Created!',
                         'request_id' => $UserRequest->id,
                         'current_provider' => $UserRequest->current_provider_id,
                     ]);
             }else{
+                Log::info("Redirect to dashboard");
                 return redirect('dashboard');
             }
         } catch (Exception $e) {
@@ -467,13 +499,16 @@ class UserApiController extends Controller
         $this->validate($request, [
                 'request_id' => 'required|numeric|exists:user_requests,id,user_id,'.Auth::user()->id,
             ]);
+            Log::useDailyFiles(storage_path().'/logs/cancel.log');
         try{
             $UserRequest = UserRequests::findOrFail($request->request_id);
             if($UserRequest->status == 'CANCELLED')
             {
                 if($request->ajax()) {
-                    return response()->json(['error' => trans('api.ride.already_cancelled')], 500);
+                    Log::info("Ride cancelled already ".$request->request_id." return with status 500");
+                    return response()->json(['error' => trans('api.ride.already_cancelled')], 200);
                 }else{
+                  Log::info("Request id ".$request->request_id." already cancelled");
                     return back()->with('flash_error', 'Request is Already Cancelled!');
                 }
             }
@@ -486,22 +521,28 @@ class UserApiController extends Controller
                     // send push and email
                 }
                 if($request->ajax()) {
+                    Log::info("Ride with request id ".$request->request_id." cancelled");
                     return response()->json(['message' => trans('api.ride.ride_cancelled')]);
                 }else{
+                  Log::info("Directed to dashboard and Ride with request id ".$request->request_id." cancelled");
                     return redirect('dashboard')->with('flash_success','Request Cancelled Successfully');
                 }
             } else {
                 if($request->ajax()) {
+                    Log::info("Request ".$request->request_id. "already started, can not cancel, return with status 500");
                     return response()->json(['error' => trans('api.ride.already_onride')], 500);
                 }else{
+                  Log::info("Request ".$request->request_id. "already started, can not cancel");
                     return back()->with('flash_error', 'Service Already Started!');
                 }
             }
         }
         catch (ModelNotFoundException $e) {
             if($request->ajax()) {
+                Log::info("Something went wrong, Exception: ".$e->getMessage());
                 return response()->json(['error' => trans('api.something_went_wrong')]);
             }else{
+              Log::info("Exception: ".$e->getMessage());
                 return back()->with('flash_error', 'No Request Found!');
             }
         }
@@ -513,13 +554,18 @@ class UserApiController extends Controller
      */
     public function request_status_check() {
         try{
+          Log::useDailyFiles(storage_path().'/logs/requestCheck.log');
+
+            Log::info("status check request");
             $check_status = ['CANCELLED'];
             $UserRequests = UserRequests::UserRequestStatusCheck(Auth::user()->id,$check_status)
                                         ->get()
                                         ->toArray();
+            Log::info("data returned");
             return response()->json(['data' => $UserRequests]);
         }
         catch (Exception $e) {
+            Log::info("Something went wrong, Exception: ".$e->getMessage()." return with status 500");
             return response()->json(['error' => trans('api.something_went_wrong')], 500);
         }
     }
@@ -529,6 +575,8 @@ class UserApiController extends Controller
      * @return \Illuminate\Http\Response
      */
     public function rate_provider(Request $request) {
+      Log::useDailyFiles(storage_path().'/logs/rate_provider.log');
+
         $this->validate($request, [
                 'request_id' => 'required|integer|exists:user_requests,id,user_id,'.Auth::user()->id,
                 'rating' => 'required|integer|in:1,2,3,4,5',
@@ -540,8 +588,10 @@ class UserApiController extends Controller
                 ->first();
         if ($UserRequests) {
             if($request->ajax()){
+                Log::info("Not paid, return with status 500");
                 return response()->json(['error' => trans('api.user.not_paid')], 500);
             } else {
+                Log::info("Service already started");
                 return back()->with('flash_error', 'Service Already Started!');
             }
         }
@@ -567,14 +617,19 @@ class UserApiController extends Controller
             Provider::where('id',$UserRequest->provider_id)->update(['rating' => $average]);
             // Send Push Notification to Provider
             if($request->ajax()){
+                Log::info("Provider rated");
                 return response()->json(['message' => trans('api.ride.provider_rated')]);
             }else{
+                Log::info("Redirected to dashboard, provider rated");
                 return redirect('dashboard')->with('flash_success', 'Driver Rated Successfully!');
             }
         } catch (Exception $e) {
             if($request->ajax()){
+                Log::info("Something went wrong ".$e->getMessage()."500");
                 return response()->json(['error' => trans('api.something_went_wrong')], 500);
             }else{
+              Log::info($e->getMessage()."500");
+
                 return back()->with('flash_error', 'Something went wrong');
             }
         }
@@ -586,6 +641,7 @@ class UserApiController extends Controller
      */
     public function trips() {
         try{
+          Log::useDailyFiles(storage_path().'/logs/trips.log');
             $UserRequests = UserRequests::UserTrips(Auth::user()->id)->get();
             //var_dump($UserRequests);die();
             if(!empty($UserRequests)){
@@ -594,9 +650,11 @@ class UserApiController extends Controller
                     $UserRequests[$key]->static_map = "https://maps.googleapis.com/maps/api/staticmap?autoscale=1&size=320x130&maptype=terrian&format=png&visual_refresh=true&markers=icon:".$map_icon."%7C".$value->s_latitude.",".$value->s_longitude."&markers=icon:".$map_icon."%7C".$value->d_latitude.",".$value->d_longitude."&path=color:0x000000|weight:3|".$value->s_latitude.",".$value->s_longitude."|".$value->d_latitude.",".$value->d_longitude."&key=".env('GOOGLE_API_KEY');
                 }
             }
+            Log::info("return userrequest");
             return $UserRequests;
         }
         catch (Exception $e) {
+            Log::info("Exception:".$e->getMessage());
             return response()->json(['error' => trans('api.something_went_wrong')]);
         }
     }
@@ -633,14 +691,23 @@ class UserApiController extends Controller
                 'd_longitude' => 'nullable|numeric',
                 'service_type' => 'required|numeric|exists:service_types,id',
             ]);
+            Log::useDailyFiles(storage_path().'/logs/estimated_fare.log');
+        Log::info("1");
         try{
           if($request->d_latitude != "" && $request->d_longitude != ""){
+            Log::info("2");
             $details = "http://maps.googleapis.com/maps/api/distancematrix/json?origins=".$request->s_latitude.",".$request->s_longitude."&destinations=".$request->d_latitude.",".$request->d_longitude."&mode=driving&sensor=false";
+            Log::info("3");
             $json = file_get_contents($details);
+            Log::info("4");
             $details = json_decode($json, TRUE);
+            Log::info("5");
             $meter = $details['rows'][0]['elements'][0]['distance']['value'];
+            Log::info("6");
             $time = $details['rows'][0]['elements'][0]['duration']['text'];
+            Log::info("7");
             $miles = round($meter/1609.344497893);
+            Log::info("2");
             // $tax_percentage = \Setting::get('tax_percentage');
             // $commission_percentage = \Setting::get('commission_percentage');
             // $service_type = ServiceType::findOrFail($request->service_type);
@@ -649,12 +716,14 @@ class UserApiController extends Controller
             // $price = $base_price + ($miles * $price_per_mile);
             // $price += ( $commission_percentage/100 ) * $price;
             // $tax_price = ( $tax_percentage/100 ) * $price;
+            Log::info("3");
             $tax_price = 0;
             $service_fee = Setting::get('service_fee');
             $base_fare = Setting::get('base_fare');
             $Distance = $miles * Setting::get('price_per_mile');
             $time_charges = $time * Setting::get('price_per_minute');
             $total = $service_fee + $base_fare + $Distance + $time_charges;
+            Log::info("estimated fare is ".$total);
             return response()->json([
                     'estimated_fare' => round($total,2),
                     'distance' => $miles,
@@ -665,6 +734,7 @@ class UserApiController extends Controller
                 ]);
         }
         else {
+          Log::info("estimated fare is N/A");
           return response()->json([
                   'estimated_fare' => 'N/A',
                   'distance' => '0',
@@ -676,6 +746,7 @@ class UserApiController extends Controller
         }
       }
         catch(Exception $e){
+                Log::info("Something wrong".$e->getMessage());
                 return response()->json(['error' => trans('api.something_went_wrong')], 500);
         }
     }
@@ -688,6 +759,8 @@ class UserApiController extends Controller
          $this->validate($request, [
                 'request_id' => 'required|integer|exists:user_requests,id',
             ]);
+            Log::useDailyFiles(storage_path().'/logs/trip_details.log');
+
         try{
             $UserRequests = UserRequests::UserTripDetails(Auth::user()->id,$request->request_id)->get();
             if(!empty($UserRequests)){
@@ -696,9 +769,11 @@ class UserApiController extends Controller
                     $UserRequests[$key]->static_map = "https://maps.googleapis.com/maps/api/staticmap?autoscale=1&size=320x130&maptype=terrian&format=png&visual_refresh=true&markers=icon:".$map_icon."%7C".$value->s_latitude.",".$value->s_longitude."&markers=icon:".$map_icon."%7C".$value->d_latitude.",".$value->d_longitude."&path=color:0x000000|weight:3|".$value->s_latitude.",".$value->s_longitude."|".$value->d_latitude.",".$value->d_longitude."&key=".env('GOOGLE_API_KEY');
                 }
             }
+            Log::info("Details returned for request id ".$request->request_id);
             return $UserRequests;
         }
         catch (Exception $e) {
+            Log::info("Something went wrong");
             return response()->json(['error' => trans('api.something_went_wrong')]);
         }
     }

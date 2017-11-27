@@ -46,11 +46,68 @@ class CardResource extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function addCard(Request $request)
     {
-         $this->validate($request,[
-                'stripe_token' => 'required'
-            ]);
+
+      $this->validate($request,[
+             'card_no' => 'required',
+             'cvc' => 'required',
+             'exp_month' => 'required',
+             'exp_year' => 'required'
+
+         ]);
+         try{
+         \Stripe\Stripe::setApiKey(Setting::get('stripe_secret_key'));
+
+         $card_tok = \Stripe\Token::create(array(
+                "card" => array(
+                "number" => $request->card_no,
+                "exp_month" => $request->exp_month,
+                "exp_year" => $request->exp_year,
+                "cvc" => $request->cvc
+              )
+            ));
+            return $this->store($request,$card_tok->id);
+
+          }
+          catch(\Stripe\Error\Card $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+
+          } catch (\Stripe\Error\RateLimit $e) {
+            // Too many requests made to the API too quickly
+            return response()->json(['error' => $e->getMessage()], 500);
+
+          } catch (\Stripe\Error\InvalidRequest $e) {
+            // Invalid parameters were supplied to Stripe's API
+            return response()->json(['error' => $e->getMessage()], 500);
+
+          } catch (\Stripe\Error\Authentication $e) {
+            // Authentication with Stripe's API failed
+            return response()->json(['error' => $e->getMessage()], 500);
+
+            // (maybe you changed API keys recently)
+          } catch (\Stripe\Error\ApiConnection $e) {
+            // Network communication with Stripe failed
+            return response()->json(['error' => $e->getMessage()], 500);
+
+          } catch (\Stripe\Error\Base $e) {
+            // Display a very generic error to the user, and maybe send
+            return response()->json(['error' => $e->getMessage()], 500);
+
+            // yourself an email
+          } catch (Exception $e) {
+            // Something else happened, completely unrelated to Stripe
+            return response()->json(['error' => $e->getMessage()], 500);
+
+          }
+
+
+    }
+    public function store(Request $request,$token)
+    {
+        //  $this->validate($request,[
+        //         'stripe_token' => 'required'
+        //     ]);
 
 
         try{
@@ -58,7 +115,7 @@ class CardResource extends Controller
             $customer_id = $this->customer_id();
             $this->set_stripe();
             $customer = \Stripe\Customer::retrieve($customer_id);
-            $card = $customer->sources->create(["source" => $request->stripe_token]);
+            $card = $customer->sources->create(["source" => $token]);
 
             $create_card = new Card;
             $create_card->user_id = Auth::user()->id;
@@ -70,7 +127,7 @@ class CardResource extends Controller
             $user->payment_mode = 'CARD';
             $user->save();
             if($request->ajax()){
-                return response()->json(['message' => 'Card Added']);
+                return response()->json(['message' => 'Card Added'],200);
             }else{
                 return back()->with('flash_success','Card Added');
             }

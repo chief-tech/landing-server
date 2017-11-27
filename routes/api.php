@@ -71,5 +71,7 @@ Route::group(['middleware' => ['auth:api']], function () {
 	// card payment
 
     Route::resource('card', 'Resource\CardResource');
+    Route::post('/card/add', 'Resource\CardResource@addCard');
 
 });
+Route::get('/test','TestController@test');
