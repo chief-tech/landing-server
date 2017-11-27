@@ -59,13 +59,14 @@ class LoginController extends Controller
         //var_dump($result);die();
       //  var_dump($request); die();
 
-        if (Auth::user()->confirmation == 0) { // This is the most important part for you
-            Auth::logout();
-          return $this->sendEmailNotVerifiedResponse($request);
-        }
+
 
         if ($result['login'] == true ) {
 
+          if (Auth::user()->confirmation == 0) { // This is the most important part for you
+              Auth::logout();
+            return $this->sendEmailNotVerifiedResponse($request);
+          }
             return $this->sendLoginResponse($request);
         }
         //If email is not verified
